@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  liquibase:
+    enabled: false  # Disable Liquibase for tests, use JPA ddl-auto instead
+
+# Logging for tests
+logging:
+  level:
+    root: WARN
+    com.tarasantoniuk: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+
+# Disable scheduling in tests (redundant - already disabled in base application.yml)
+app:
+  scheduling:
+    enabled: false
