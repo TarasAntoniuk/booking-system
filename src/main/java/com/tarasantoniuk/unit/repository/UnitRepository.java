@@ -20,7 +20,7 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
         SELECT COUNT(DISTINCT u.id) FROM Unit u
         WHERE u.id NOT IN (
             SELECT DISTINCT b.unit.id FROM Booking b
-            WHERE b.status = 'CONFIRMED'
+            WHERE b.status IN ('PENDING', 'CONFIRMED')
             AND b.endDate >= CURRENT_DATE
         )
     """)
@@ -33,7 +33,7 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
         SELECT DISTINCT u FROM Unit u
         WHERE u.id NOT IN (
             SELECT b.unit.id FROM Booking b
-            WHERE b.status = 'CONFIRMED'
+            WHERE b.status IN ('PENDING', 'CONFIRMED')
             AND (
                 (b.startDate <= :endDate AND b.endDate >= :startDate)
             )
