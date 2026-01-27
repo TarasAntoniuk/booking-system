@@ -60,7 +60,7 @@ class BookingExpirationSchedulerTest {
     }
 
     @Test
-    @DisplayName("Should cancel expired bookings successfully")
+    @DisplayName("Should cancel expired bookings successfully using batch operations")
     void shouldCancelExpiredBookingsSuccessfully() {
         // Given
         Booking booking1 = createExpiredBooking(1L, LocalDateTime.now().minusMinutes(10));
@@ -76,13 +76,13 @@ class BookingExpirationSchedulerTest {
 
         // Then
         verify(bookingRepository).findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class));
-        verify(bookingRepository, times(2)).save(any(Booking.class));
+        verify(bookingRepository).saveAll(expiredBookings);
 
         assertThat(booking1.getStatus()).isEqualTo(BookingStatus.CANCELLED);
         assertThat(booking2.getStatus()).isEqualTo(BookingStatus.CANCELLED);
 
-        verify(eventService).createEvent(EventType.BOOKING_EXPIRED, 1L);
-        verify(eventService).createEvent(EventType.BOOKING_EXPIRED, 2L);
+        verify(eventService).createEventsInBatch(eq(EventType.BOOKING_EXPIRED), eq(List.of(1L, 2L)));
+        verify(cacheService).invalidateCache();
     }
 
     @Test
@@ -97,12 +97,13 @@ class BookingExpirationSchedulerTest {
 
         // Then
         verify(bookingRepository).findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class));
-        verify(bookingRepository, never()).save(any(Booking.class));
-        verify(eventService, never()).createEvent(any(), any());
+        verify(bookingRepository, never()).saveAll(any());
+        verify(eventService, never()).createEventsInBatch(any(), any());
+        verify(cacheService, never()).invalidateCache();
     }
 
     @Test
-    @DisplayName("Should cancel only one expired booking")
+    @DisplayName("Should cancel only one expired booking using batch")
     void shouldCancelOnlyOneExpiredBooking() {
         // Given
         Booking booking = createExpiredBooking(1L, LocalDateTime.now().minusMinutes(1));
@@ -115,9 +116,9 @@ class BookingExpirationSchedulerTest {
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        verify(bookingRepository).save(booking);
+        verify(bookingRepository).saveAll(expiredBookings);
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-        verify(eventService).createEvent(EventType.BOOKING_EXPIRED, 1L);
+        verify(eventService).createEventsInBatch(EventType.BOOKING_EXPIRED, List.of(1L));
     }
 
     @Test
@@ -135,8 +136,8 @@ class BookingExpirationSchedulerTest {
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        verify(bookingRepository, times(5)).save(any(Booking.class));
-        verify(eventService, times(5)).createEvent(eq(EventType.BOOKING_EXPIRED), anyLong());
+        verify(bookingRepository, times(1)).saveAll(expiredBookings);
+        verify(eventService, times(1)).createEventsInBatch(eq(EventType.BOOKING_EXPIRED), anyList());
 
         expiredBookings.forEach(booking ->
                 assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED)
@@ -165,8 +166,8 @@ class BookingExpirationSchedulerTest {
     }
 
     @Test
-    @DisplayName("Should save each booking individually")
-    void shouldSaveEachBookingIndividually() {
+    @DisplayName("Should save all bookings in single batch operation")
+    void shouldSaveAllBookingsInSingleBatchOperation() {
         // Given
         Booking booking1 = createExpiredBooking(1L, LocalDateTime.now().minusMinutes(10));
         Booking booking2 = createExpiredBooking(2L, LocalDateTime.now().minusMinutes(5));
@@ -180,16 +181,18 @@ class BookingExpirationSchedulerTest {
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        ArgumentCaptor<Booking> bookingCaptor = ArgumentCaptor.forClass(Booking.class);
-        verify(bookingRepository, times(2)).save(bookingCaptor.capture());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Booking>> bookingCaptor = ArgumentCaptor.forClass(List.class);
+        verify(bookingRepository, times(1)).saveAll(bookingCaptor.capture());
 
-        List<Booking> savedBookings = bookingCaptor.getAllValues();
+        List<Booking> savedBookings = bookingCaptor.getValue();
         assertThat(savedBookings).containsExactlyInAnyOrder(booking1, booking2);
+        assertThat(savedBookings).allMatch(b -> b.getStatus() == BookingStatus.CANCELLED);
     }
 
     @Test
-    @DisplayName("Should create event for each cancelled booking")
-    void shouldCreateEventForEachCancelledBooking() {
+    @DisplayName("Should create events in batch for all cancelled bookings")
+    void shouldCreateEventsInBatchForAllCancelledBookings() {
         // Given
         Booking booking1 = createExpiredBooking(1L, LocalDateTime.now().minusMinutes(10));
         Booking booking2 = createExpiredBooking(2L, LocalDateTime.now().minusMinutes(5));
@@ -205,10 +208,11 @@ class BookingExpirationSchedulerTest {
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        ArgumentCaptor<Long> idCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(eventService, times(3)).createEvent(eq(EventType.BOOKING_EXPIRED), idCaptor.capture());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Long>> idCaptor = ArgumentCaptor.forClass(List.class);
+        verify(eventService, times(1)).createEventsInBatch(eq(EventType.BOOKING_EXPIRED), idCaptor.capture());
 
-        List<Long> capturedIds = idCaptor.getAllValues();
+        List<Long> capturedIds = idCaptor.getValue();
         assertThat(capturedIds).containsExactlyInAnyOrder(1L, 2L, 3L);
     }
 

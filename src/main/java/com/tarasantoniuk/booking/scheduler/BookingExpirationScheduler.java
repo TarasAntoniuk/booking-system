@@ -26,7 +26,8 @@ public class BookingExpirationScheduler {
 
 
     /**
-     * Runs every minute to cancel expired bookings
+     * Runs every minute to cancel expired bookings.
+     * Uses batch operations to avoid N+1 problem.
      */
     @Scheduled(fixedDelay = 60000, initialDelay = 10000) // 60 seconds delay, 10 seconds initial delay
     @Transactional
@@ -42,13 +43,15 @@ public class BookingExpirationScheduler {
 
         log.info("Found {} expired bookings to cancel", expiredBookings.size());
 
-        for (Booking booking : expiredBookings) {
-            booking.setStatus(BookingStatus.CANCELLED);
-            bookingRepository.save(booking);
+        // Batch update: set status to CANCELLED for all expired bookings
+        expiredBookings.forEach(booking -> booking.setStatus(BookingStatus.CANCELLED));
+        bookingRepository.saveAll(expiredBookings);
 
-            eventService.createEvent(EventType.BOOKING_EXPIRED, booking.getId());
-            log.debug("Cancelled expired booking ID: {}", booking.getId());
-        }
+        // Bulk insert: create events for all expired bookings
+        List<Long> bookingIds = expiredBookings.stream()
+                .map(Booking::getId)
+                .toList();
+        eventService.createEventsInBatch(EventType.BOOKING_EXPIRED, bookingIds);
 
         cacheService.invalidateCache();
 
