@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset taras:7-add-booking-overlap-constraint
+--changeset taras:7-add-booking-overlap-constraint splitStatements:false
 -- Create a function to check for booking overlaps
 -- This provides database-level protection against race conditions
 CREATE OR REPLACE FUNCTION check_booking_overlap()
