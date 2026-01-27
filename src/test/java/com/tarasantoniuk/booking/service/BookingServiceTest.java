@@ -97,7 +97,7 @@ class BookingServiceTest {
         request.setStartDate(LocalDate.now().plusDays(1));
         request.setEndDate(LocalDate.now().plusDays(3));
 
-        when(unitRepository.findById(1L)).thenReturn(Optional.of(testUnit));
+        when(unitRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testUnit));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(bookingRepository.findConflictingBookings(eq(1L), any(), any())).thenReturn(List.of());
         when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
@@ -110,7 +110,7 @@ class BookingServiceTest {
         assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getStatus()).isEqualTo(BookingStatus.PENDING);
 
-        verify(unitRepository).findById(1L);
+        verify(unitRepository).findByIdWithLock(1L);
         verify(userRepository).findById(1L);
         verify(bookingRepository).save(any(Booking.class));
         verify(paymentService).createPayment(eq(testBooking), any(BigDecimal.class));
@@ -127,7 +127,7 @@ class BookingServiceTest {
         request.setStartDate(LocalDate.now().plusDays(1));
         request.setEndDate(LocalDate.now().plusDays(3));
 
-        when(unitRepository.findById(999L)).thenReturn(Optional.empty());
+        when(unitRepository.findByIdWithLock(999L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> bookingService.createBooking(request))
@@ -147,7 +147,7 @@ class BookingServiceTest {
         request.setStartDate(LocalDate.now().plusDays(1));
         request.setEndDate(LocalDate.now().plusDays(3));
 
-        when(unitRepository.findById(1L)).thenReturn(Optional.of(testUnit));
+        when(unitRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testUnit));
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -171,7 +171,7 @@ class BookingServiceTest {
         Booking conflictingBooking = new Booking();
         conflictingBooking.setId(2L);
 
-        when(unitRepository.findById(1L)).thenReturn(Optional.of(testUnit));
+        when(unitRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testUnit));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(bookingRepository.findConflictingBookings(eq(1L), any(), any()))
                 .thenReturn(List.of(conflictingBooking));
@@ -300,11 +300,10 @@ class BookingServiceTest {
         request.setStartDate(LocalDate.of(2026, 1, 22));
         request.setEndDate(LocalDate.of(2026, 1, 22));
 
-        when(unitRepository.findById(1L)).thenReturn(Optional.of(testUnit));
+        when(unitRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testUnit));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
-        // BUG: findConflictingBookings only checks CONFIRMED bookings, not PENDING
-        // This allows the second booking to be created even though there's a PENDING booking
+        // findConflictingBookings checks both CONFIRMED and PENDING bookings
         when(bookingRepository.findConflictingBookings(eq(1L), any(), any()))
                 .thenReturn(List.of(pendingBooking)); // Should find the pending booking
 
@@ -344,7 +343,7 @@ class BookingServiceTest {
         firstBooking.setEndDate(sameDate);
         firstBooking.setStatus(BookingStatus.PENDING);
 
-        when(unitRepository.findById(1L)).thenReturn(Optional.of(testUnit));
+        when(unitRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testUnit));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
         // First booking creation - no conflicts

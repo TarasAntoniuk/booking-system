@@ -1,14 +1,17 @@
 package com.tarasantoniuk.unit.repository;
 
 import com.tarasantoniuk.unit.entity.Unit;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificationExecutor<Unit> {
@@ -46,4 +49,13 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
     );
 
     List<Unit> findByOwnerId(Long ownerId);
+
+    /**
+     * Find unit by ID with pessimistic write lock.
+     * Used to prevent race conditions during booking creation.
+     * The lock is held until the transaction commits.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM Unit u WHERE u.id = :id")
+    Optional<Unit> findByIdWithLock(@Param("id") Long id);
 }

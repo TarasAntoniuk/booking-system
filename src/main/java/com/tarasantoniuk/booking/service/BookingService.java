@@ -39,15 +39,16 @@ public class BookingService {
 
     @Transactional
     public BookingResponseDto createBooking(CreateBookingRequestDto request) {
-        // 1. Validate unit exists
-        Unit unit = unitRepository.findById(request.getUnitId())
+        // 1. Acquire pessimistic lock on unit to prevent race conditions
+        // This ensures only one transaction can create a booking for this unit at a time
+        Unit unit = unitRepository.findByIdWithLock(request.getUnitId())
                 .orElseThrow(() -> new IllegalArgumentException("Unit not found with id: " + request.getUnitId()));
 
         // 2. Validate user exists
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + request.getUserId()));
 
-        // 3. Check unit availability
+        // 3. Check unit availability (now safe from race conditions due to lock)
         if (!isUnitAvailable(request.getUnitId(), request.getStartDate(), request.getEndDate())) {
             throw new UnitNotAvailableException("Unit is not available for selected dates");
         }
@@ -72,7 +73,7 @@ public class BookingService {
         // 7. Create event
         eventService.createEvent(EventType.BOOKING_CREATED, saved.getId());
 
-        //8. Invalidate cache
+        // 8. Invalidate cache
         cacheService.invalidateCache();
 
         return BookingResponseDto.from(saved, totalCost);

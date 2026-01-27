@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/01-create-tables.sql
   - include:
       file: db/changelog/02-insert-initial-data.sql
+  - include:
+      file: db/changelog/03-add-booking-constraint.sql
