@@ -1,14 +1,9 @@
 package com.tarasantoniuk.booking.scheduler;
 
-import com.tarasantoniuk.booking.entity.Booking;
-import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.statistic.service.CacheService;
-import com.tarasantoniuk.unit.entity.Unit;
-import com.tarasantoniuk.user.entity.User;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,9 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,45 +37,23 @@ class BookingExpirationSchedulerTest {
     @InjectMocks
     private BookingExpirationScheduler bookingExpirationScheduler;
 
-    private User testUser;
-    private Unit testUnit;
-    private List<Booking> expiredBookings;
-
-    @BeforeEach
-    void setUp() {
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setUsername("testuser");
-
-        testUnit = new Unit();
-        testUnit.setId(1L);
-
-        expiredBookings = new ArrayList<>();
-    }
-
     @Test
-    @DisplayName("Should cancel expired bookings successfully using batch operations")
+    @DisplayName("Should cancel expired bookings using bulk UPDATE")
     void shouldCancelExpiredBookingsSuccessfully() {
         // Given
-        Booking booking1 = createExpiredBooking(1L, LocalDateTime.now().minusMinutes(10));
-        Booking booking2 = createExpiredBooking(2L, LocalDateTime.now().minusMinutes(5));
-        expiredBookings.add(booking1);
-        expiredBookings.add(booking2);
-
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
-                .thenReturn(expiredBookings);
+        List<Long> expiredIds = List.of(1L, 2L);
+        when(bookingRepository.findExpiredPendingBookingIds(any(LocalDateTime.class)))
+                .thenReturn(expiredIds);
+        when(bookingRepository.bulkCancelExpiredBookings(any(LocalDateTime.class)))
+                .thenReturn(2);
 
         // When
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        verify(bookingRepository).findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class));
-        verify(bookingRepository).saveAll(expiredBookings);
-
-        assertThat(booking1.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-        assertThat(booking2.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-
-        verify(eventService).createEventsInBatch(eq(EventType.BOOKING_EXPIRED), eq(List.of(1L, 2L)));
+        verify(bookingRepository).findExpiredPendingBookingIds(any(LocalDateTime.class));
+        verify(bookingRepository).bulkCancelExpiredBookings(any(LocalDateTime.class));
+        verify(eventService).createEventsInBatch(eq(EventType.BOOKING_EXPIRED), eq(expiredIds));
         verify(cacheService).invalidateCache();
     }
 
@@ -89,74 +61,68 @@ class BookingExpirationSchedulerTest {
     @DisplayName("Should do nothing when no expired bookings found")
     void shouldDoNothingWhenNoExpiredBookings() {
         // Given
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
-                .thenReturn(new ArrayList<>());
+        when(bookingRepository.findExpiredPendingBookingIds(any(LocalDateTime.class)))
+                .thenReturn(Collections.emptyList());
 
         // When
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        verify(bookingRepository).findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class));
-        verify(bookingRepository, never()).saveAll(any());
+        verify(bookingRepository).findExpiredPendingBookingIds(any(LocalDateTime.class));
+        verify(bookingRepository, never()).bulkCancelExpiredBookings(any());
         verify(eventService, never()).createEventsInBatch(any(), any());
         verify(cacheService, never()).invalidateCache();
     }
 
     @Test
-    @DisplayName("Should cancel only one expired booking using batch")
+    @DisplayName("Should cancel single expired booking using bulk UPDATE")
     void shouldCancelOnlyOneExpiredBooking() {
         // Given
-        Booking booking = createExpiredBooking(1L, LocalDateTime.now().minusMinutes(1));
-        expiredBookings.add(booking);
-
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
-                .thenReturn(expiredBookings);
+        List<Long> expiredIds = List.of(1L);
+        when(bookingRepository.findExpiredPendingBookingIds(any(LocalDateTime.class)))
+                .thenReturn(expiredIds);
+        when(bookingRepository.bulkCancelExpiredBookings(any(LocalDateTime.class)))
+                .thenReturn(1);
 
         // When
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        verify(bookingRepository).saveAll(expiredBookings);
-        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-        verify(eventService).createEventsInBatch(EventType.BOOKING_EXPIRED, List.of(1L));
+        verify(bookingRepository).bulkCancelExpiredBookings(any(LocalDateTime.class));
+        verify(eventService).createEventsInBatch(EventType.BOOKING_EXPIRED, expiredIds);
     }
 
     @Test
-    @DisplayName("Should cancel multiple expired bookings in batch")
+    @DisplayName("Should cancel multiple expired bookings using single bulk UPDATE")
     void shouldCancelMultipleExpiredBookingsInBatch() {
         // Given
-        for (int i = 1; i <= 5; i++) {
-            expiredBookings.add(createExpiredBooking((long) i, LocalDateTime.now().minusMinutes(i)));
-        }
-
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
-                .thenReturn(expiredBookings);
+        List<Long> expiredIds = List.of(1L, 2L, 3L, 4L, 5L);
+        when(bookingRepository.findExpiredPendingBookingIds(any(LocalDateTime.class)))
+                .thenReturn(expiredIds);
+        when(bookingRepository.bulkCancelExpiredBookings(any(LocalDateTime.class)))
+                .thenReturn(5);
 
         // When
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        verify(bookingRepository, times(1)).saveAll(expiredBookings);
-        verify(eventService, times(1)).createEventsInBatch(eq(EventType.BOOKING_EXPIRED), anyList());
-
-        expiredBookings.forEach(booking ->
-                assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED)
-        );
+        verify(bookingRepository, times(1)).bulkCancelExpiredBookings(any(LocalDateTime.class));
+        verify(eventService, times(1)).createEventsInBatch(eq(EventType.BOOKING_EXPIRED), eq(expiredIds));
     }
 
     @Test
     @DisplayName("Should use current time when checking for expired bookings")
     void shouldUseCurrentTimeWhenCheckingForExpiredBookings() {
         // Given
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
-                .thenReturn(new ArrayList<>());
+        when(bookingRepository.findExpiredPendingBookingIds(any(LocalDateTime.class)))
+                .thenReturn(Collections.emptyList());
 
         // When
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
         ArgumentCaptor<LocalDateTime> timeCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
-        verify(bookingRepository).findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), timeCaptor.capture());
+        verify(bookingRepository).findExpiredPendingBookingIds(timeCaptor.capture());
 
         LocalDateTime capturedTime = timeCaptor.getValue();
         assertThat(capturedTime).isBetween(
@@ -166,43 +132,37 @@ class BookingExpirationSchedulerTest {
     }
 
     @Test
-    @DisplayName("Should save all bookings in single batch operation")
-    void shouldSaveAllBookingsInSingleBatchOperation() {
+    @DisplayName("Should use same timestamp for finding IDs and bulk cancel")
+    void shouldUseSameTimestampForFindAndCancel() {
         // Given
-        Booking booking1 = createExpiredBooking(1L, LocalDateTime.now().minusMinutes(10));
-        Booking booking2 = createExpiredBooking(2L, LocalDateTime.now().minusMinutes(5));
-        expiredBookings.add(booking1);
-        expiredBookings.add(booking2);
-
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
-                .thenReturn(expiredBookings);
+        List<Long> expiredIds = List.of(1L, 2L);
+        when(bookingRepository.findExpiredPendingBookingIds(any(LocalDateTime.class)))
+                .thenReturn(expiredIds);
+        when(bookingRepository.bulkCancelExpiredBookings(any(LocalDateTime.class)))
+                .thenReturn(2);
 
         // When
         bookingExpirationScheduler.cancelExpiredBookings();
 
         // Then
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<Booking>> bookingCaptor = ArgumentCaptor.forClass(List.class);
-        verify(bookingRepository, times(1)).saveAll(bookingCaptor.capture());
+        ArgumentCaptor<LocalDateTime> findTimeCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
+        ArgumentCaptor<LocalDateTime> cancelTimeCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
 
-        List<Booking> savedBookings = bookingCaptor.getValue();
-        assertThat(savedBookings).containsExactlyInAnyOrder(booking1, booking2);
-        assertThat(savedBookings).allMatch(b -> b.getStatus() == BookingStatus.CANCELLED);
+        verify(bookingRepository).findExpiredPendingBookingIds(findTimeCaptor.capture());
+        verify(bookingRepository).bulkCancelExpiredBookings(cancelTimeCaptor.capture());
+
+        assertThat(findTimeCaptor.getValue()).isEqualTo(cancelTimeCaptor.getValue());
     }
 
     @Test
     @DisplayName("Should create events in batch for all cancelled bookings")
     void shouldCreateEventsInBatchForAllCancelledBookings() {
         // Given
-        Booking booking1 = createExpiredBooking(1L, LocalDateTime.now().minusMinutes(10));
-        Booking booking2 = createExpiredBooking(2L, LocalDateTime.now().minusMinutes(5));
-        Booking booking3 = createExpiredBooking(3L, LocalDateTime.now().minusMinutes(1));
-        expiredBookings.add(booking1);
-        expiredBookings.add(booking2);
-        expiredBookings.add(booking3);
-
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
-                .thenReturn(expiredBookings);
+        List<Long> expiredIds = List.of(1L, 2L, 3L);
+        when(bookingRepository.findExpiredPendingBookingIds(any(LocalDateTime.class)))
+                .thenReturn(expiredIds);
+        when(bookingRepository.bulkCancelExpiredBookings(any(LocalDateTime.class)))
+                .thenReturn(3);
 
         // When
         bookingExpirationScheduler.cancelExpiredBookings();
@@ -214,17 +174,5 @@ class BookingExpirationSchedulerTest {
 
         List<Long> capturedIds = idCaptor.getValue();
         assertThat(capturedIds).containsExactlyInAnyOrder(1L, 2L, 3L);
-    }
-
-    private Booking createExpiredBooking(Long id, LocalDateTime expiresAt) {
-        Booking booking = new Booking();
-        booking.setId(id);
-        booking.setStatus(BookingStatus.PENDING);
-        booking.setExpiresAt(expiresAt);
-        booking.setUser(testUser);
-        booking.setUnit(testUnit);
-        booking.setStartDate(LocalDate.now().plusDays(1));
-        booking.setEndDate(LocalDate.now().plusDays(3));
-        return booking;
     }
 }
