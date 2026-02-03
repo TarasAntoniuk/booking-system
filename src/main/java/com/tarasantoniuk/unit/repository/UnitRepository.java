@@ -25,6 +25,7 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
             FROM Unit u
             LEFT JOIN Booking b ON b.unit.id = u.id\s
                 AND b.status IN ('PENDING', 'CONFIRMED')
+                AND b.startDate <= CURRENT_DATE
                 AND b.endDate >= CURRENT_DATE
             WHERE b.id IS NULL
     """)
