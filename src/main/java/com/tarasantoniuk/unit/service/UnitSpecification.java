@@ -14,6 +14,8 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_MULTIPLIER;
+
 public class UnitSpecification {
 
     public static Specification<Unit> withCriteria(UnitSearchCriteriaDto criteria) {
@@ -38,7 +40,7 @@ public class UnitSpecification {
             // Filter by minimum cost (considering 15% markup)
             if (criteria.getMinCost() != null) {
                 BigDecimal minBaseCost = criteria.getMinCost().divide(
-                        BigDecimal.valueOf(1.15), 2, RoundingMode.HALF_UP
+                        MARKUP_MULTIPLIER, 2, RoundingMode.HALF_UP
                 );
                 predicates.add(cb.greaterThanOrEqualTo(root.get("baseCost"), minBaseCost));
             }
@@ -46,14 +48,14 @@ public class UnitSpecification {
             // Filter by maximum cost (considering 15% markup)
             if (criteria.getMaxCost() != null) {
                 BigDecimal maxBaseCost = criteria.getMaxCost().divide(
-                        BigDecimal.valueOf(1.15), 2, RoundingMode.HALF_UP
+                        MARKUP_MULTIPLIER, 2, RoundingMode.HALF_UP
                 );
                 predicates.add(cb.lessThanOrEqualTo(root.get("baseCost"), maxBaseCost));
             }
 
             // Filter by availability in date range
             if (criteria.getStartDate() != null && criteria.getEndDate() != null) {
-                Subquery<Long> bookingSubquery = query.subquery(Long.class);
+                Subquery<Long> bookingSubquery = query. subquery(Long.class);
                 Root<Booking> bookingRoot = bookingSubquery.from(Booking.class);
                 bookingSubquery.select(bookingRoot.get("unit").get("id"));
                 bookingSubquery.where(

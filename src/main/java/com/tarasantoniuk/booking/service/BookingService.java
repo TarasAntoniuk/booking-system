@@ -21,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+
+import static com.tarasantoniuk.booking.config.BookingTimeConstants.BOOKING_EXPIRATION_MINUTES;
+import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_RATE;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,7 +63,7 @@ public class BookingService {
         booking.setStartDate(request.getStartDate());
         booking.setEndDate(request.getEndDate());
         booking.setStatus(BookingStatus.PENDING);
-        booking.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        booking.setExpiresAt(LocalDateTime.now().plusMinutes(BOOKING_EXPIRATION_MINUTES));
 
         Booking saved = bookingRepository.save(booking);
 
@@ -139,7 +142,7 @@ public class BookingService {
         }
 
         BigDecimal baseCost = unit.getBaseCost().multiply(BigDecimal.valueOf(days));
-        BigDecimal markup = baseCost.multiply(BigDecimal.valueOf(0.15)); // 15%
+        BigDecimal markup = baseCost.multiply(MARKUP_RATE);
         return baseCost.add(markup);
     }
 }
