@@ -9,7 +9,7 @@ import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.payment.service.PaymentService;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.unit.repository.UnitRepository;
@@ -54,7 +54,7 @@ class BookingServiceTest {
     private EventService eventService;
 
     @Mock
-    private CacheService cacheService;
+    private UnitStatisticsService unitStatisticsService;
 
     @InjectMocks
     private BookingService bookingService;

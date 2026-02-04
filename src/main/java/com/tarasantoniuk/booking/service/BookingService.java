@@ -9,7 +9,7 @@ import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.payment.service.PaymentService;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
@@ -37,7 +37,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final PaymentService paymentService;
     private final EventService eventService;
-    private final CacheService cacheService;
+    private final UnitStatisticsService unitStatisticsService;
 
 
     @Transactional
@@ -77,7 +77,7 @@ public class BookingService {
         eventService.createEvent(EventType.BOOKING_CREATED, saved.getId());
 
         // 8. Invalidate cache
-        cacheService.invalidateCache();
+        unitStatisticsService.invalidateAvailableUnitsCache();
 
         return BookingResponseDto.from(saved, totalCost);
     }
@@ -128,7 +128,7 @@ public class BookingService {
         // Create event
         eventService.createEvent(EventType.BOOKING_CANCELLED, bookingId);
 
-        cacheService.invalidateCache();
+        unitStatisticsService.invalidateAvailableUnitsCache();
     }
 
     private boolean isUnitAvailable(Long unitId, java.time.LocalDate startDate, java.time.LocalDate endDate) {

@@ -2,7 +2,7 @@ package com.tarasantoniuk.unit.service;
 
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.dto.CreateUnitRequestDto;
 import com.tarasantoniuk.unit.dto.UnitResponseDto;
 import com.tarasantoniuk.unit.dto.UnitSearchCriteriaDto;
@@ -25,7 +25,7 @@ public class UnitService {
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
     private final EventService eventService;
-    private final CacheService cacheService;
+    private final UnitStatisticsService unitStatisticsService;
 
     @Transactional
     public UnitResponseDto createUnit(CreateUnitRequestDto request) {
@@ -45,7 +45,7 @@ public class UnitService {
         // Create event for unit creation
         eventService.createEvent(EventType.UNIT_CREATED, saved.getId());
 
-        cacheService.invalidateCache();
+        unitStatisticsService.invalidateAvailableUnitsCache();
 
         return UnitResponseDto.from(saved);
     }

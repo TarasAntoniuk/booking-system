@@ -1,12 +1,14 @@
 package com.tarasantoniuk.statistic.service;
 
-import com.tarasantoniuk.unit.repository.UnitRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service for caching operations using Redis.
+ * Handles ONLY cache storage and retrieval - NO business logic.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -14,53 +16,45 @@ public class CacheService {
 
     private static final String AVAILABLE_UNITS_KEY = "stats:available_units_count";
 
-    private final UnitRepository unitRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * Get available units count from cache or database
+     * Retrieve available units count from cache.
+     *
+     * @return cached count, or null if not in cache
      */
     public Long getAvailableUnitsCount() {
         Object cached = redisTemplate.opsForValue().get(AVAILABLE_UNITS_KEY);
 
-        if (cached != null) {
-            log.debug("Retrieved available units count from cache: {}", cached);
-            return ((Number) cached).longValue();
+        if (cached == null) {
+            log.debug("Cache miss for available units count");
+            return null;
         }
 
-        log.debug("Cache miss for available units count, recalculating...");
-        return recalculateAndCache();
+        log.debug("Cache hit for available units count: {}", cached);
+        return ((Number) cached).longValue();
     }
 
     /**
-     * Recalculate and update cache
+     * Cache the available units count.
+     *
+     * @param count the count to cache
      */
-    public Long recalculateAndCache() {
-        Long count = unitRepository.countAvailableUnits();
+    public void cacheAvailableUnitsCount(Long count) {
         redisTemplate.opsForValue().set(AVAILABLE_UNITS_KEY, count);
-        log.info("Cached available units count: {}", count);
-        return count;
+        log.debug("Cached available units count: {}", count);
     }
 
     /**
-     * Invalidate cache (lazy approach)*
-     * <p>
+     * Invalidate (delete) the available units count from cache.
+     *
      * Note: Uses lazy invalidation for simplicity. Next request will recalculate.
      * For production with high traffic, consider eager invalidation or async refresh.
-     * <p>
+     *
      * Trade-off: Fast invalidation vs first user after invalidation waits for DB query.
      */
-    public void invalidateCache() {
+    public void invalidateAvailableUnitsCount() {
         Boolean deleted = redisTemplate.delete(AVAILABLE_UNITS_KEY);
         log.debug("Invalidated available units cache, deleted: {}", deleted);
-    }
-
-    /**
-     * Warm up cache on application startup
-     */
-    @PostConstruct
-    public void warmUpCache() {
-        log.info("Warming up cache on application startup...");
-        recalculateAndCache();
     }
 }

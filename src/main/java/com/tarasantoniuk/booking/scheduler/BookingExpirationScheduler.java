@@ -3,7 +3,7 @@ package com.tarasantoniuk.booking.scheduler;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,7 +20,7 @@ public class BookingExpirationScheduler {
 
     private final BookingRepository bookingRepository;
     private final EventService eventService;
-    private final CacheService cacheService;
+    private final UnitStatisticsService unitStatisticsService;
 
 
     /**
@@ -47,7 +47,7 @@ public class BookingExpirationScheduler {
         // 3. Create audit events in batch
         eventService.createEventsInBatch(EventType.BOOKING_EXPIRED, expiredBookingIds);
 
-        cacheService.invalidateCache();
+        unitStatisticsService.invalidateAvailableUnitsCache();
 
         log.info("Successfully cancelled {} expired bookings", cancelledCount);
     }

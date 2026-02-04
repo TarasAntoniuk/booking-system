@@ -2,7 +2,7 @@ package com.tarasantoniuk.unit.service;
 
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.dto.CreateUnitRequestDto;
 import com.tarasantoniuk.unit.dto.UnitResponseDto;
 import com.tarasantoniuk.unit.dto.UnitSearchCriteriaDto;
@@ -48,7 +48,7 @@ class UnitServiceTest {
     private EventService eventService;
 
     @Mock
-    private CacheService cacheService;
+    private UnitStatisticsService unitStatisticsService;
 
     @InjectMocks
     private UnitService unitService;
