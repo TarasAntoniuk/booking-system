@@ -115,6 +115,7 @@ class BookingServiceTest {
         verify(bookingRepository).save(any(Booking.class));
         verify(paymentService).createPayment(eq(testBooking), any(BigDecimal.class));
         verify(eventService).createEvent(EventType.BOOKING_CREATED, 1L);
+        verify(unitStatisticsService).invalidateAvailableUnitsCache();
     }
 
     @Test
@@ -250,6 +251,7 @@ class BookingServiceTest {
         verify(bookingRepository).findById(1L);
         verify(bookingRepository).save(testBooking);
         verify(eventService).createEvent(EventType.BOOKING_CANCELLED, 1L);
+        verify(unitStatisticsService).invalidateAvailableUnitsCache();
         assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
     }
 

@@ -100,6 +100,7 @@ class UnitServiceTest {
         verify(userRepository).findById(1L);
         verify(unitRepository).save(any(Unit.class));
         verify(eventService).createEvent(EventType.UNIT_CREATED, 1L);
+        verify(unitStatisticsService).invalidateAvailableUnitsCache();
     }
 
     @Test

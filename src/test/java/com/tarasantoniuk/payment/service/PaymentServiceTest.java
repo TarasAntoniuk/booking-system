@@ -127,6 +127,7 @@ class PaymentServiceTest {
         verify(bookingRepository).save(testBooking);
         verify(eventService).createEvent(EventType.PAYMENT_COMPLETED, 1L);
         verify(eventService).createEvent(EventType.BOOKING_CONFIRMED, 1L);
+        verify(unitStatisticsService).invalidateAvailableUnitsCache();
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
         assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
