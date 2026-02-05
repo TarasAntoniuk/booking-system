@@ -20,8 +20,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -140,5 +145,60 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.error").value("Internal Server Error"))
                 .andExpect(jsonPath("$.message").value("An unexpected error occurred. Please try again later."))
                 .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("Should return 400 with field details when @Valid fails")
+    void shouldReturn400WithFieldDetailsWhenValidationFails() throws Exception {
+        // Given - empty request body triggers @NotNull violations
+        CreateBookingRequestDto request = new CreateBookingRequestDto();
+        // All fields are null, violating @NotNull constraints
+
+        // When & Then
+        mockMvc.perform(post("/api/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Validation Failed"))
+                .andExpect(jsonPath("$.message").value("Invalid request data"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details").isNotEmpty())
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("Should return 400 with type info when path variable type mismatches")
+    void shouldReturn400WhenPathVariableTypeMismatches() throws Exception {
+        // Given - "abc" cannot be parsed as Long for {id} path variable
+
+        // When & Then
+        mockMvc.perform(get("/api/bookings/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("Invalid value for parameter")))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("Should format message with 'unknown' when requiredType is null")
+    void shouldHandleTypeMismatchWithNullRequiredType() {
+        // Given - directly invoke handler with a crafted exception where requiredType is null
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
+                "abc", null, "id", null, null);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/bookings/abc");
+
+        // When
+        var response = handler.handleTypeMismatch(ex, request);
+
+        // Then
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getMessage())
+                .contains("Invalid value for parameter 'id'")
+                .contains("unknown");
     }
 }

@@ -13,7 +13,6 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -553,6 +552,50 @@ class UnitSpecificationTest {
                     .hasSize(2)
                     .extracting(Unit::getId)
                     .containsExactlyInAnyOrder(unit2.getId(), unit3.getId());
+        }
+
+        @Test
+        void whenOnlyStartDateProvided_thenNoDateFilter() {
+            // Given - unit1 has overlapping booking
+            createAndSaveBooking(
+                    unit1,
+                    LocalDate.now().plusDays(5),
+                    LocalDate.now().plusDays(10),
+                    BookingStatus.CONFIRMED
+            );
+
+            // Search with only startDate (endDate is null)
+            UnitSearchCriteriaDto criteria = new UnitSearchCriteriaDto();
+            criteria.setStartDate(LocalDate.now().plusDays(7));
+            criteria.setEndDate(null);
+
+            // When
+            List<Unit> results = unitRepository.findAll(UnitSpecification.withCriteria(criteria));
+
+            // Then - all units returned (incomplete date range skips date filter)
+            assertThat(results).hasSize(3);
+        }
+
+        @Test
+        void whenOnlyEndDateProvided_thenNoDateFilter() {
+            // Given - unit1 has overlapping booking
+            createAndSaveBooking(
+                    unit1,
+                    LocalDate.now().plusDays(5),
+                    LocalDate.now().plusDays(10),
+                    BookingStatus.CONFIRMED
+            );
+
+            // Search with only endDate (startDate is null)
+            UnitSearchCriteriaDto criteria = new UnitSearchCriteriaDto();
+            criteria.setStartDate(null);
+            criteria.setEndDate(LocalDate.now().plusDays(12));
+
+            // When
+            List<Unit> results = unitRepository.findAll(UnitSpecification.withCriteria(criteria));
+
+            // Then - all units returned (incomplete date range skips date filter)
+            assertThat(results).hasSize(3);
         }
 
         @Test

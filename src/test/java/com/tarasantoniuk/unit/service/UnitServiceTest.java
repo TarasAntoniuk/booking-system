@@ -9,7 +9,6 @@ import com.tarasantoniuk.unit.dto.UnitSearchCriteriaDto;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.unit.repository.UnitRepository;
-import com.tarasantoniuk.unit.service.UnitService;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -169,6 +168,29 @@ class UnitServiceTest {
         assertThat(response.getContent()).hasSize(1);
         assertThat(response.getContent().get(0).getNumberOfRooms()).isEqualTo(2);
         verify(unitRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    @DisplayName("Should map unit with null owner to response with null ownerId")
+    void shouldMapUnitWithNullOwnerToResponse() {
+        // Given
+        Unit unitWithoutOwner = new Unit();
+        unitWithoutOwner.setId(2L);
+        unitWithoutOwner.setNumberOfRooms(1);
+        unitWithoutOwner.setAccommodationType(AccommodationType.FLAT);
+        unitWithoutOwner.setFloor(1);
+        unitWithoutOwner.setBaseCost(BigDecimal.valueOf(80));
+        unitWithoutOwner.setOwner(null);
+
+        when(unitRepository.findById(2L)).thenReturn(Optional.of(unitWithoutOwner));
+
+        // When
+        UnitResponseDto response = unitService.getUnitById(2L);
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(2L);
+        assertThat(response.getOwnerId()).isNull();
     }
 
     @Test

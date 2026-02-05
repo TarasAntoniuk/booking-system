@@ -285,6 +285,21 @@ class BookingServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw exception when booking not found during cancellation")
+    void shouldThrowExceptionWhenBookingNotFoundDuringCancellation() {
+        // Given
+        when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> bookingService.cancelBooking(999L, 1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Booking not found with id: 999");
+
+        verify(bookingRepository).findById(999L);
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
     @DisplayName("BUG: Should prevent double booking when first booking is PENDING")
     void shouldPreventDoubleBookingWhenFirstBookingIsPending() {
         // Given - First booking with PENDING status
