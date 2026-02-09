@@ -10,7 +10,7 @@ import com.tarasantoniuk.payment.dto.ProcessPaymentRequestDto;
 import com.tarasantoniuk.payment.entity.Payment;
 import com.tarasantoniuk.payment.enums.PaymentStatus;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final EventService eventService;
-    private final CacheService cacheService;
+    private final UnitStatisticsService unitStatisticsService;
 
     @Transactional
     public Payment createPayment(Booking booking, BigDecimal amount) {
@@ -66,7 +66,7 @@ public class PaymentService {
         eventService.createEvent(EventType.BOOKING_CONFIRMED, booking.getId());
 
         // 7. Invalidate cache
-        cacheService.invalidateCache();
+        unitStatisticsService.invalidateAvailableUnitsCache();
 
         return PaymentResponseDto.from(payment);
     }

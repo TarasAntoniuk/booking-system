@@ -4,7 +4,6 @@ import com.tarasantoniuk.user.dto.UserRequestDto;
 import com.tarasantoniuk.user.dto.UserResponseDto;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
-import com.tarasantoniuk.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -155,5 +154,19 @@ class UserServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.getUsername()).isEqualTo("testuser");
         verify(userRepository).findByUsername("testuser");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when user not found by username")
+    void shouldThrowExceptionWhenUserNotFoundByUsername() {
+        // Given
+        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> userService.getUserByUsername("nonexistent"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("User not found with username: nonexistent");
+
+        verify(userRepository).findByUsername("nonexistent");
     }
 }

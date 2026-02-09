@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 class StatisticServiceTest {
 
     @Mock
-    private CacheService cacheService;
+    private UnitStatisticsService unitStatisticsService;
 
     @InjectMocks
     private StatisticService statisticService;
@@ -25,7 +25,7 @@ class StatisticServiceTest {
     @DisplayName("Should get available units from cache")
     void shouldGetAvailableUnitsFromCache() {
         // Given
-        when(cacheService.getAvailableUnitsCount()).thenReturn(42L);
+        when(unitStatisticsService.getAvailableUnitsCount()).thenReturn(42L);
 
         // When
         AvailableUnitsStatisticDto result = statisticService.getAvailableUnits();
@@ -33,14 +33,14 @@ class StatisticServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getAvailableUnitsCount()).isEqualTo(42L);
-        verify(cacheService).getAvailableUnitsCount();
+        verify(unitStatisticsService).getAvailableUnitsCount();
     }
 
     @Test
     @DisplayName("Should refresh available units and return new count")
     void shouldRefreshAvailableUnits() {
         // Given
-        when(cacheService.recalculateAndCache()).thenReturn(25L);
+        when(unitStatisticsService.calculateAndCacheAvailableUnits()).thenReturn(25L);
 
         // When
         AvailableUnitsStatisticDto result = statisticService.refreshAvailableUnits();
@@ -48,14 +48,14 @@ class StatisticServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getAvailableUnitsCount()).isEqualTo(25L);
-        verify(cacheService).recalculateAndCache();
+        verify(unitStatisticsService).calculateAndCacheAvailableUnits();
     }
 
     @Test
     @DisplayName("Should handle zero available units")
     void shouldHandleZeroAvailableUnits() {
         // Given
-        when(cacheService.getAvailableUnitsCount()).thenReturn(0L);
+        when(unitStatisticsService.getAvailableUnitsCount()).thenReturn(0L);
 
         // When
         AvailableUnitsStatisticDto result = statisticService.getAvailableUnits();

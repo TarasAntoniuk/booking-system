@@ -12,6 +12,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_MULTIPLIER;
+
 @Entity
 @Table(name = "units")
 @Getter
@@ -53,6 +55,6 @@ public class Unit {
      * Calculate total cost with 15% markup
      */
     public BigDecimal getTotalCost() {
-        return baseCost.multiply(BigDecimal.valueOf(1.15));
+        return baseCost.multiply(MARKUP_MULTIPLIER);
     }
 }

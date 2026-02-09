@@ -9,7 +9,7 @@ import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.payment.service.PaymentService;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.unit.repository.UnitRepository;
@@ -54,7 +54,7 @@ class BookingServiceTest {
     private EventService eventService;
 
     @Mock
-    private CacheService cacheService;
+    private UnitStatisticsService unitStatisticsService;
 
     @InjectMocks
     private BookingService bookingService;
@@ -115,6 +115,7 @@ class BookingServiceTest {
         verify(bookingRepository).save(any(Booking.class));
         verify(paymentService).createPayment(eq(testBooking), any(BigDecimal.class));
         verify(eventService).createEvent(EventType.BOOKING_CREATED, 1L);
+        verify(unitStatisticsService).invalidateAvailableUnitsCache();
     }
 
     @Test
@@ -250,6 +251,7 @@ class BookingServiceTest {
         verify(bookingRepository).findById(1L);
         verify(bookingRepository).save(testBooking);
         verify(eventService).createEvent(EventType.BOOKING_CANCELLED, 1L);
+        verify(unitStatisticsService).invalidateAvailableUnitsCache();
         assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
     }
 
@@ -279,6 +281,21 @@ class BookingServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Booking is already cancelled");
 
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when booking not found during cancellation")
+    void shouldThrowExceptionWhenBookingNotFoundDuringCancellation() {
+        // Given
+        when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> bookingService.cancelBooking(999L, 1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Booking not found with id: 999");
+
+        verify(bookingRepository).findById(999L);
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 

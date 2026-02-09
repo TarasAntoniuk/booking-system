@@ -8,15 +8,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StatisticService {
 
-    private final CacheService cacheService;
+    private final UnitStatisticsService unitStatisticsService;
 
     public AvailableUnitsStatisticDto getAvailableUnits() {
-        Long count = cacheService.getAvailableUnitsCount();
+        Long count = unitStatisticsService.getAvailableUnitsCount();
         return new AvailableUnitsStatisticDto(count);
     }
 
     public AvailableUnitsStatisticDto refreshAvailableUnits() {
-        Long count = cacheService.recalculateAndCache();
+        Long count = unitStatisticsService.calculateAndCacheAvailableUnits();
         return new AvailableUnitsStatisticDto(count);
     }
 }

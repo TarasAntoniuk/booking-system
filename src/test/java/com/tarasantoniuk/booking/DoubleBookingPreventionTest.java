@@ -6,6 +6,7 @@ import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.booking.service.BookingService;
+import com.tarasantoniuk.common.AbstractIntegrationTest;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
@@ -16,8 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -32,11 +31,9 @@ import static org.assertj.core.api.Assertions.*;
  * two bookings for the same unit and dates when the first booking
  * was still in PENDING status.
  */
-@SpringBootTest
-@ActiveProfiles("test")
 @Transactional
 @DisplayName("Double Booking Prevention Integration Tests")
-class DoubleBookingPreventionTest {
+class DoubleBookingPreventionTest extends AbstractIntegrationTest {
 
     @Autowired
     private BookingService bookingService;

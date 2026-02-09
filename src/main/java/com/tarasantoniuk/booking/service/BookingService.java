@@ -9,7 +9,7 @@ import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.payment.service.PaymentService;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
@@ -21,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+
+import static com.tarasantoniuk.booking.config.BookingTimeConstants.BOOKING_EXPIRATION_MINUTES;
+import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_RATE;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,7 +37,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final PaymentService paymentService;
     private final EventService eventService;
-    private final CacheService cacheService;
+    private final UnitStatisticsService unitStatisticsService;
 
 
     @Transactional
@@ -60,7 +63,7 @@ public class BookingService {
         booking.setStartDate(request.getStartDate());
         booking.setEndDate(request.getEndDate());
         booking.setStatus(BookingStatus.PENDING);
-        booking.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        booking.setExpiresAt(LocalDateTime.now().plusMinutes(BOOKING_EXPIRATION_MINUTES));
 
         Booking saved = bookingRepository.save(booking);
 
@@ -74,7 +77,7 @@ public class BookingService {
         eventService.createEvent(EventType.BOOKING_CREATED, saved.getId());
 
         // 8. Invalidate cache
-        cacheService.invalidateCache();
+        unitStatisticsService.invalidateAvailableUnitsCache();
 
         return BookingResponseDto.from(saved, totalCost);
     }
@@ -125,7 +128,7 @@ public class BookingService {
         // Create event
         eventService.createEvent(EventType.BOOKING_CANCELLED, bookingId);
 
-        cacheService.invalidateCache();
+        unitStatisticsService.invalidateAvailableUnitsCache();
     }
 
     private boolean isUnitAvailable(Long unitId, java.time.LocalDate startDate, java.time.LocalDate endDate) {
@@ -139,7 +142,7 @@ public class BookingService {
         }
 
         BigDecimal baseCost = unit.getBaseCost().multiply(BigDecimal.valueOf(days));
-        BigDecimal markup = baseCost.multiply(BigDecimal.valueOf(0.15)); // 15%
+        BigDecimal markup = baseCost.multiply(MARKUP_RATE);
         return baseCost.add(markup);
     }
 }

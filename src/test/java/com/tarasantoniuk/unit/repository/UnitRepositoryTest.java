@@ -1,36 +1,58 @@
 package com.tarasantoniuk.unit.repository;
 
+import com.tarasantoniuk.booking.entity.Booking;
+import com.tarasantoniuk.booking.enums.BookingStatus;
+import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Repository layer tests for UnitRepository using H2 in-memory database.
- * Tests JPA queries and custom repository methods.
- */
 @DataJpaTest
+@Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestPropertySource(properties = {
-        "spring.liquibase.enabled=false",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
-})
 @DisplayName("UnitRepository Tests")
 class UnitRepositoryTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine")
+            .withDatabaseName("testdb")
+            .withUsername("test")
+            .withPassword("test")
+            .withReuse(true);
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+        registry.add("spring.liquibase.enabled", () -> "false");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.jpa.properties.hibernate.dialect",
+                () -> "org.hibernate.dialect.PostgreSQLDialect");
+    }
 
     @Autowired
     private UnitRepository unitRepository;
@@ -38,15 +60,27 @@ class UnitRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BookingRepository bookingRepository;
+
     private User testOwner;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
-        // Create test owner
+        bookingRepository.deleteAll();
+        unitRepository.deleteAll();
+        userRepository.deleteAll();
+
         testOwner = new User();
         testOwner.setUsername("testowner");
         testOwner.setEmail("owner@test.com");
         testOwner = userRepository.save(testOwner);
+
+        testUser = new User();
+        testUser.setUsername("testuser");
+        testUser.setEmail("user@test.com");
+        testUser = userRepository.save(testUser);
     }
 
     @Test
@@ -135,6 +169,116 @@ class UnitRepositoryTest {
         assertThat(found.getCreatedAt()).isNotNull();
     }
 
+    @Nested
+    @DisplayName("countAvailableUnits")
+    class CountAvailableUnitsTests {
+
+        @Test
+        @DisplayName("Should count unit with future booking as available")
+        void shouldCountUnitWithFutureBookingAsAvailable() {
+            // Given
+            Unit unit = unitRepository.save(createUnit(2, AccommodationType.FLAT, 100.0));
+            createBooking(unit, 7, 3, BookingStatus.CONFIRMED);
+
+            // When
+            Long count = unitRepository.countAvailableUnits();
+
+            // Then
+            assertThat(count).isEqualTo(1L);
+        }
+
+        @Test
+        @DisplayName("Should not count unit with active booking as available")
+        void shouldNotCountUnitWithActiveBookingAsAvailable() {
+            // Given
+            Unit unit = unitRepository.save(createUnit(2, AccommodationType.FLAT, 100.0));
+            createBooking(unit, -2, 4, BookingStatus.CONFIRMED);
+
+            // When
+            Long count = unitRepository.countAvailableUnits();
+
+            // Then
+            assertThat(count).isEqualTo(0L);
+        }
+
+        @Test
+        @DisplayName("Should count unit with past booking as available")
+        void shouldCountUnitWithPastBookingAsAvailable() {
+            // Given
+            Unit unit = unitRepository.save(createUnit(2, AccommodationType.FLAT, 100.0));
+            createBooking(unit, -5, 3, BookingStatus.CONFIRMED);
+
+            // When
+            Long count = unitRepository.countAvailableUnits();
+
+            // Then
+            assertThat(count).isEqualTo(1L);
+        }
+
+        @Test
+        @DisplayName("Should count unit with no bookings as available")
+        void shouldCountUnitWithNoBookingsAsAvailable() {
+            // Given
+            unitRepository.save(createUnit(2, AccommodationType.FLAT, 100.0));
+
+            // When
+            Long count = unitRepository.countAvailableUnits();
+
+            // Then
+            assertThat(count).isEqualTo(1L);
+        }
+
+        @Test
+        @DisplayName("Should not count unit with active PENDING booking as available")
+        void shouldNotCountUnitWithActivePendingBookingAsAvailable() {
+            // Given
+            Unit unit = unitRepository.save(createUnit(2, AccommodationType.FLAT, 100.0));
+            createBooking(unit, -1, 3, BookingStatus.PENDING);
+
+            // When
+            Long count = unitRepository.countAvailableUnits();
+
+            // Then
+            assertThat(count).isEqualTo(0L);
+        }
+
+        @Test
+        @DisplayName("Should count unit with cancelled active-dates booking as available")
+        void shouldCountUnitWithCancelledBookingAsAvailable() {
+            // Given
+            Unit unit = unitRepository.save(createUnit(2, AccommodationType.FLAT, 100.0));
+            createBooking(unit, -1, 3, BookingStatus.CANCELLED);
+
+            // When
+            Long count = unitRepository.countAvailableUnits();
+
+            // Then
+            assertThat(count).isEqualTo(1L);
+        }
+
+        @Test
+        @DisplayName("Should correctly count mixed scenario: multiple units with different booking states")
+        void shouldCorrectlyCountMixedScenario() {
+            // Given
+            // Unit 1: no bookings -> available
+            unitRepository.save(createUnit(1, AccommodationType.FLAT, 80.0));
+
+            // Unit 2: active booking -> unavailable
+            Unit unit2 = unitRepository.save(createUnit(2, AccommodationType.APARTMENTS, 120.0));
+            createBooking(unit2, -2, 5, BookingStatus.CONFIRMED);
+
+            // Unit 3: future booking only -> available
+            Unit unit3 = unitRepository.save(createUnit(3, AccommodationType.HOME, 200.0));
+            createBooking(unit3, 7, 4, BookingStatus.CONFIRMED);
+
+            // When
+            Long count = unitRepository.countAvailableUnits();
+
+            // Then
+            assertThat(count).isEqualTo(2L);
+        }
+    }
+
     private Unit createUnit(int rooms, AccommodationType type, double baseCost) {
         Unit unit = new Unit();
         unit.setOwner(testOwner);
@@ -144,5 +288,18 @@ class UnitRepositoryTest {
         unit.setBaseCost(new BigDecimal(baseCost));
         unit.setDescription("Test unit");
         return unit;
+    }
+
+    private Booking createBooking(Unit unit, int daysFromNow, int duration, BookingStatus status) {
+        Booking booking = new Booking();
+        booking.setUnit(unit);
+        booking.setUser(testUser);
+        booking.setStartDate(LocalDate.now().plusDays(daysFromNow));
+        booking.setEndDate(LocalDate.now().plusDays(daysFromNow + duration));
+        booking.setStatus(status);
+        if (status == BookingStatus.PENDING) {
+            booking.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        }
+        return bookingRepository.save(booking);
     }
 }

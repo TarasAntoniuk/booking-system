@@ -10,7 +10,7 @@ import com.tarasantoniuk.payment.dto.ProcessPaymentRequestDto;
 import com.tarasantoniuk.payment.entity.Payment;
 import com.tarasantoniuk.payment.enums.PaymentStatus;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.user.entity.User;
@@ -45,7 +45,7 @@ class PaymentServiceTest {
     private EventService eventService;
 
     @Mock
-    private CacheService cacheService;
+    private UnitStatisticsService unitStatisticsService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -127,6 +127,7 @@ class PaymentServiceTest {
         verify(bookingRepository).save(testBooking);
         verify(eventService).createEvent(EventType.PAYMENT_COMPLETED, 1L);
         verify(eventService).createEvent(EventType.BOOKING_CONFIRMED, 1L);
+        verify(unitStatisticsService).invalidateAvailableUnitsCache();
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
         assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);

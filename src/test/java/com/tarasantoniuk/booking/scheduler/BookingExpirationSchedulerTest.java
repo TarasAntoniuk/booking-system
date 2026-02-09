@@ -3,7 +3,7 @@ package com.tarasantoniuk.booking.scheduler;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
-import com.tarasantoniuk.statistic.service.CacheService;
+import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +32,7 @@ class BookingExpirationSchedulerTest {
     private EventService eventService;
 
     @Mock
-    private CacheService cacheService;
+    private UnitStatisticsService unitStatisticsService;
 
     @InjectMocks
     private BookingExpirationScheduler bookingExpirationScheduler;
@@ -54,7 +54,7 @@ class BookingExpirationSchedulerTest {
         verify(bookingRepository).findExpiredPendingBookingIds(any(LocalDateTime.class));
         verify(bookingRepository).bulkCancelExpiredBookings(any(LocalDateTime.class));
         verify(eventService).createEventsInBatch(eq(EventType.BOOKING_EXPIRED), eq(expiredIds));
-        verify(cacheService).invalidateCache();
+        verify(unitStatisticsService).invalidateAvailableUnitsCache();
     }
 
     @Test
@@ -71,7 +71,7 @@ class BookingExpirationSchedulerTest {
         verify(bookingRepository).findExpiredPendingBookingIds(any(LocalDateTime.class));
         verify(bookingRepository, never()).bulkCancelExpiredBookings(any());
         verify(eventService, never()).createEventsInBatch(any(), any());
-        verify(cacheService, never()).invalidateCache();
+        verify(unitStatisticsService, never()).invalidateAvailableUnitsCache();
     }
 
     @Test
