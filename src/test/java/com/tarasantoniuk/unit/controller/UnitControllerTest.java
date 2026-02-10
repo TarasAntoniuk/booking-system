@@ -21,6 +21,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Pageable;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -197,6 +201,60 @@ class UnitControllerTest {
                 .andExpect(status().isOk());
 
         verify(unitService).getAllUnits(any());
+    }
+
+    @Test
+    @DisplayName("Should cap page size to 100 for getAllUnits")
+    void shouldCapPageSizeTo100ForGetAllUnits() throws Exception {
+        // Given
+        Page<UnitResponseDto> page = new PageImpl<>(List.of(), PageRequest.of(0, 100), 0);
+        when(unitService.getAllUnits(any())).thenReturn(page);
+
+        // When
+        mockMvc.perform(get("/api/units")
+                        .param("size", "1000"))
+                .andExpect(status().isOk());
+
+        // Then
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(unitService).getAllUnits(captor.capture());
+        assertThat(captor.getValue().getPageSize()).isEqualTo(100);
+    }
+
+    @Test
+    @DisplayName("Should cap page size to 100 for searchUnits")
+    void shouldCapPageSizeTo100ForSearchUnits() throws Exception {
+        // Given
+        Page<UnitResponseDto> page = new PageImpl<>(List.of(), PageRequest.of(0, 100), 0);
+        when(unitService.searchUnits(any(), any())).thenReturn(page);
+
+        // When
+        mockMvc.perform(get("/api/units/search")
+                        .param("size", "500"))
+                .andExpect(status().isOk());
+
+        // Then
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(unitService).searchUnits(any(), captor.capture());
+        assertThat(captor.getValue().getPageSize()).isEqualTo(100);
+    }
+
+    @Test
+    @DisplayName("Should use requested size when within limit")
+    void shouldUseRequestedSizeWhenWithinLimit() throws Exception {
+        // Given
+        Page<UnitResponseDto> page = new PageImpl<>(List.of(), PageRequest.of(0, 50), 0);
+        when(unitService.getAllUnits(any())).thenReturn(page);
+
+        // When
+        mockMvc.perform(get("/api/units")
+                        .param("size", "50"))
+                .andExpect(status().isOk());
+
+        // Then
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(unitService).getAllUnits(captor.capture());
+        assertThat(captor.getValue().getPageSize()).isEqualTo(50);
     }
 
     @Test
