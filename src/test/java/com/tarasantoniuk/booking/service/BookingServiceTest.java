@@ -1,5 +1,6 @@
 package com.tarasantoniuk.booking.service;
 
+import com.tarasantoniuk.common.TestFixtures;
 import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.dto.BookingResponseDto;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
@@ -9,7 +10,6 @@ import com.tarasantoniuk.booking.event.BookingEvent;
 import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.unit.entity.Unit;
-import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
@@ -29,7 +29,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,26 +62,9 @@ class BookingServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setUsername("testuser");
-        testUser.setEmail("test@example.com");
-
-        testUnit = new Unit();
-        testUnit.setId(1L);
-        testUnit.setNumberOfRooms(2);
-        testUnit.setAccommodationType(AccommodationType.FLAT);
-        testUnit.setFloor(3);
-        testUnit.setBaseCost(BigDecimal.valueOf(100));
-
-        testBooking = new Booking();
-        testBooking.setId(1L);
-        testBooking.setUnit(testUnit);
-        testBooking.setUser(testUser);
-        testBooking.setStartDate(LocalDate.now().plusDays(1));
-        testBooking.setEndDate(LocalDate.now().plusDays(3));
-        testBooking.setStatus(BookingStatus.PENDING);
-        testBooking.setCreatedAt(LocalDateTime.now());
+        testUser = TestFixtures.createTestUser();
+        testUnit = TestFixtures.createTestUnit();
+        testBooking = TestFixtures.createTestBooking(testUnit, testUser);
     }
 
     @Test

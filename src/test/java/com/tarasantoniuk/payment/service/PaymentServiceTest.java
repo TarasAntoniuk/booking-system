@@ -1,5 +1,6 @@
 package com.tarasantoniuk.payment.service;
 
+import com.tarasantoniuk.common.TestFixtures;
 import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
@@ -13,7 +14,6 @@ import com.tarasantoniuk.payment.entity.Payment;
 import com.tarasantoniuk.payment.enums.PaymentStatus;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.entity.Unit;
-import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,8 +24,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -58,30 +56,10 @@ class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setUsername("testuser");
-
-        testUnit = new Unit();
-        testUnit.setId(1L);
-        testUnit.setBaseCost(BigDecimal.valueOf(100));
-        testUnit.setAccommodationType(AccommodationType.FLAT);
-
-        testBooking = new Booking();
-        testBooking.setId(1L);
-        testBooking.setUnit(testUnit);
-        testBooking.setUser(testUser);
-        testBooking.setStartDate(LocalDate.now().plusDays(1));
-        testBooking.setEndDate(LocalDate.now().plusDays(3));
-        testBooking.setStatus(BookingStatus.PENDING);
-        testBooking.setExpiresAt(LocalDateTime.now().plusMinutes(15));
-
-        testPayment = new Payment();
-        testPayment.setId(1L);
-        testPayment.setBooking(testBooking);
-        testPayment.setAmount(BigDecimal.valueOf(230.00));
-        testPayment.setStatus(PaymentStatus.PENDING);
-        testPayment.setCreatedAt(LocalDateTime.now());
+        testUser = TestFixtures.createTestUser();
+        testUnit = TestFixtures.createTestUnit();
+        testBooking = TestFixtures.createTestBooking(testUnit, testUser);
+        testPayment = TestFixtures.createTestPayment(testBooking);
     }
 
     @Test
