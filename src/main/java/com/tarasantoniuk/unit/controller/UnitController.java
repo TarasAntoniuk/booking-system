@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Units", description = "Accommodation unit management API - create, view and search units")
 public class UnitController {
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final UnitService unitService;
 
     @PostMapping
@@ -87,10 +89,11 @@ public class UnitController {
             @Parameter(description = "Sort direction", example = "asc", schema = @Schema(allowableValues = {"asc", "desc"}))
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
+        int safeSize = Math.min(size, MAX_PAGE_SIZE);
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, safeSize, sort);
 
         Page<UnitResponseDto> units = unitService.getAllUnits(pageable);
         return ResponseEntity.ok(units);
@@ -119,10 +122,11 @@ public class UnitController {
             @Parameter(description = "Sort direction", example = "asc", schema = @Schema(allowableValues = {"asc", "desc"}))
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
+        int safeSize = Math.min(size, MAX_PAGE_SIZE);
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, safeSize, sort);
 
         Page<UnitResponseDto> units = unitService.searchUnits(criteria, pageable);
         return ResponseEntity.ok(units);
