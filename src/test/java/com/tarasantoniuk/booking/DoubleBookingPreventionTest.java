@@ -7,17 +7,18 @@ import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.booking.service.BookingService;
 import com.tarasantoniuk.common.AbstractIntegrationTest;
+import com.tarasantoniuk.event.repository.EventRepository;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,7 +32,6 @@ import static org.assertj.core.api.Assertions.*;
  * two bookings for the same unit and dates when the first booking
  * was still in PENDING status.
  */
-@Transactional
 @DisplayName("Double Booking Prevention Integration Tests")
 class DoubleBookingPreventionTest extends AbstractIntegrationTest {
 
@@ -45,6 +45,9 @@ class DoubleBookingPreventionTest extends AbstractIntegrationTest {
     private PaymentRepository paymentRepository;
 
     @Autowired
+    private EventRepository eventRepository;
+
+    @Autowired
     private UnitRepository unitRepository;
 
     @Autowired
@@ -56,6 +59,7 @@ class DoubleBookingPreventionTest extends AbstractIntegrationTest {
     @BeforeEach
     void setUp() {
         // Clean up (delete in correct order due to foreign keys)
+        eventRepository.deleteAll();
         paymentRepository.deleteAll();
         bookingRepository.deleteAll();
         unitRepository.deleteAll();

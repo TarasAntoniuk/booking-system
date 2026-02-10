@@ -4,6 +4,7 @@ import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.common.AbstractIntegrationTest;
+import com.tarasantoniuk.event.repository.EventRepository;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
@@ -14,8 +15,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests the automatic cancellation of expired bookings after 15 minutes
  * and verifies cache invalidation happens correctly.
  */
-@Transactional
 @DisplayName("Booking Expiration Scheduler - Functional Tests")
 class BookingExpirationSchedulerFunctionalTest extends AbstractIntegrationTest {
 
@@ -43,6 +41,9 @@ class BookingExpirationSchedulerFunctionalTest extends AbstractIntegrationTest {
     private PaymentRepository paymentRepository;
 
     @Autowired
+    private EventRepository eventRepository;
+
+    @Autowired
     private UnitRepository unitRepository;
 
     @Autowired
@@ -54,8 +55,9 @@ class BookingExpirationSchedulerFunctionalTest extends AbstractIntegrationTest {
     @BeforeEach
     void setUp() {
         // Clean up in correct order (due to foreign keys)
-        paymentRepository.deleteAll();  // First delete payments
-        bookingRepository.deleteAll();  // Then bookings
+        eventRepository.deleteAll();
+        paymentRepository.deleteAll();
+        bookingRepository.deleteAll();
         unitRepository.deleteAll();
         userRepository.deleteAll();
 
