@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.tarasantoniuk.booking.config.BookingTimeConstants.SCHEDULER_FIXED_DELAY_MS;
+import static com.tarasantoniuk.booking.config.BookingTimeConstants.SCHEDULER_INITIAL_DELAY_MS;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -27,7 +30,7 @@ public class BookingExpirationScheduler {
      * Runs every minute to cancel expired bookings.
      * Uses bulk UPDATE for optimal performance (single SQL query).
      */
-    @Scheduled(fixedDelay = 60000, initialDelay = 10000) // 60 seconds delay, 10 seconds initial delay
+    @Scheduled(fixedDelay = SCHEDULER_FIXED_DELAY_MS, initialDelay = SCHEDULER_INITIAL_DELAY_MS)
     @Transactional
     public void cancelExpiredBookings() {
         LocalDateTime now = LocalDateTime.now();
