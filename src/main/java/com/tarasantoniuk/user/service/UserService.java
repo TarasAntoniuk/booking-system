@@ -1,5 +1,6 @@
 package com.tarasantoniuk.user.service;
 
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.user.dto.UserRequestDto;
 import com.tarasantoniuk.user.dto.UserResponseDto;
 import com.tarasantoniuk.user.entity.User;
@@ -38,7 +39,7 @@ public class UserService {
 
     public UserResponseDto getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return UserResponseDto.from(user);
     }
 
@@ -50,7 +51,7 @@ public class UserService {
 
     public UserResponseDto getUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
         return UserResponseDto.from(user);
     }
 }

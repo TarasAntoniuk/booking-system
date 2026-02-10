@@ -1,5 +1,6 @@
 package com.tarasantoniuk.payment.service;
 
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
@@ -145,7 +146,7 @@ class PaymentServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> paymentService.processPayment(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Booking not found");
 
         verify(paymentRepository, never()).save(any(Payment.class));
@@ -181,7 +182,7 @@ class PaymentServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> paymentService.processPayment(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Payment not found for booking");
 
         verify(eventService, never()).createEvent(any(), any());
@@ -213,7 +214,7 @@ class PaymentServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> paymentService.getPaymentByBookingId(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Payment not found for booking");
 
         verify(paymentRepository).findByBookingId(999L);

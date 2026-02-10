@@ -1,5 +1,6 @@
 package com.tarasantoniuk.booking.service;
 
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.dto.BookingResponseDto;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.entity.Booking;
@@ -132,7 +133,7 @@ class BookingServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> bookingService.createBooking(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Unit not found");
 
         verify(bookingRepository, never()).save(any(Booking.class));
@@ -153,7 +154,7 @@ class BookingServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> bookingService.createBooking(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found");
 
         verify(bookingRepository, never()).save(any(Booking.class));
@@ -209,7 +210,7 @@ class BookingServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> bookingService.getBookingById(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Booking not found");
     }
 
@@ -292,7 +293,7 @@ class BookingServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> bookingService.cancelBooking(999L, 1L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Booking not found with id: 999");
 
         verify(bookingRepository).findById(999L);
