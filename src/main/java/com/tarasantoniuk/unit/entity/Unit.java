@@ -57,4 +57,16 @@ public class Unit {
     public BigDecimal getTotalCost() {
         return baseCost.multiply(MARKUP_MULTIPLIER);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Unit unit)) return false;
+        return id != null && id.equals(unit.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
