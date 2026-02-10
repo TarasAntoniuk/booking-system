@@ -3,9 +3,9 @@ spring:
     name: booking-system
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/booking_system
-    username: booking_user
-    password: booking_pass
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/booking_system}
+    username: ${DB_USERNAME:booking_user}
+    password: ${DB_PASSWORD:booking_pass}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -27,8 +27,8 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
       timeout: 2000ms
 
   cache:
