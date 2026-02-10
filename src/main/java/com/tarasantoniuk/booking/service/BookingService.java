@@ -84,7 +84,7 @@ public class BookingService {
     }
 
     public BookingResponseDto getBookingById(Long id) {
-        Booking booking = bookingRepository.findById(id)
+        Booking booking = bookingRepository.findByIdWithUnit(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
 
         BigDecimal totalCost = calculateTotalCost(
@@ -97,7 +97,7 @@ public class BookingService {
     }
 
     public List<BookingResponseDto> getUserBookings(Long userId) {
-        List<Booking> bookings = bookingRepository.findByUserId(userId);
+        List<Booking> bookings = bookingRepository.findByUserIdWithUnit(userId);
         return bookings.stream()
                 .map(booking -> {
                     BigDecimal totalCost = calculateTotalCost(

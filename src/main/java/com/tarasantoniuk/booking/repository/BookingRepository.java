@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
@@ -24,6 +25,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Find bookings by user ID
      */
     List<Booking> findByUserId(Long userId);
+
+    /**
+     * Find bookings by user ID with unit eagerly fetched (avoids N+1)
+     */
+    @Query("SELECT b FROM Booking b JOIN FETCH b.unit WHERE b.user.id = :userId")
+    List<Booking> findByUserIdWithUnit(@Param("userId") Long userId);
+
+    /**
+     * Find booking by ID with unit eagerly fetched (avoids N+1)
+     */
+    @Query("SELECT b FROM Booking b JOIN FETCH b.unit WHERE b.id = :id")
+    Optional<Booking> findByIdWithUnit(@Param("id") Long id);
 
     /**
      * Find expired bookings with PENDING status
