@@ -1,6 +1,7 @@
 package com.tarasantoniuk.common.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.service.BookingService;
@@ -82,8 +83,8 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return 400 Bad Request when IllegalArgumentException is thrown")
-    void shouldReturn400WhenIllegalArgument() throws Exception {
+    @DisplayName("Should return 404 Not Found when ResourceNotFoundException is thrown")
+    void shouldReturn404WhenResourceNotFound() throws Exception {
         // Given
         CreateBookingRequestDto request = new CreateBookingRequestDto();
         request.setUnitId(999L);
@@ -92,15 +93,15 @@ class GlobalExceptionHandlerTest {
         request.setEndDate(LocalDate.now().plusDays(3));
 
         when(bookingService.createBooking(any()))
-                .thenThrow(new IllegalArgumentException("Unit not found with id: 999"));
+                .thenThrow(new ResourceNotFoundException("Unit not found with id: 999"));
 
         // When & Then
         mockMvc.perform(post("/api/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.message").value("Unit not found with id: 999"))
                 .andExpect(jsonPath("$.path").value("/api/bookings"))
                 .andExpect(jsonPath("$.timestamp").exists());

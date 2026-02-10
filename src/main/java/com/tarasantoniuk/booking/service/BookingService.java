@@ -14,6 +14,7 @@ import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,11 +46,11 @@ public class BookingService {
         // 1. Acquire pessimistic lock on unit to prevent race conditions
         // This ensures only one transaction can create a booking for this unit at a time
         Unit unit = unitRepository.findByIdWithLock(request.getUnitId())
-                .orElseThrow(() -> new IllegalArgumentException("Unit not found with id: " + request.getUnitId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Unit not found with id: " + request.getUnitId()));
 
         // 2. Validate user exists
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + request.getUserId()));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getUserId()));
 
         // 3. Check unit availability (now safe from race conditions due to lock)
         if (!isUnitAvailable(request.getUnitId(), request.getStartDate(), request.getEndDate())) {
@@ -84,7 +85,7 @@ public class BookingService {
 
     public BookingResponseDto getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
 
         BigDecimal totalCost = calculateTotalCost(
                 booking.getUnit(),
@@ -112,7 +113,7 @@ public class BookingService {
     @Transactional
     public void cancelBooking(Long bookingId, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         if (!booking.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("You can only cancel your own bookings");

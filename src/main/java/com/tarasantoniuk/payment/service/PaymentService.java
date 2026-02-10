@@ -1,5 +1,6 @@
 package com.tarasantoniuk.payment.service;
 
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
@@ -41,7 +42,7 @@ public class PaymentService {
     public PaymentResponseDto processPayment(ProcessPaymentRequestDto request) {
         // 1. Find booking
         Booking booking = bookingRepository.findById(request.getBookingId())
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found with id: " + request.getBookingId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + request.getBookingId()));
 
         // 2. Check if booking is still pending
         if (booking.getStatus() != BookingStatus.PENDING) {
@@ -50,7 +51,7 @@ public class PaymentService {
 
         // 3. Find payment
         Payment payment = paymentRepository.findByBookingId(request.getBookingId())
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for booking: " + request.getBookingId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for booking: " + request.getBookingId()));
 
         // 4. Process payment (emulation)
         payment.setStatus(PaymentStatus.COMPLETED);
@@ -73,7 +74,7 @@ public class PaymentService {
 
     public PaymentResponseDto getPaymentByBookingId(Long bookingId) {
         Payment payment = paymentRepository.findByBookingId(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for booking: " + bookingId));
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for booking: " + bookingId));
         return PaymentResponseDto.from(payment);
     }
 }

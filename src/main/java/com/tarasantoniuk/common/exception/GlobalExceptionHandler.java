@@ -45,7 +45,28 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handle IllegalArgumentException - validation errors, not found, etc.
+     * Handle ResourceNotFoundException - when a requested resource does not exist
+     * Returns 404 Not Found
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Resource not found: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
+     * Handle IllegalArgumentException - validation errors
      * Returns 400 Bad Request
      */
     @ExceptionHandler(IllegalArgumentException.class)

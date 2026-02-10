@@ -1,5 +1,6 @@
 package com.tarasantoniuk.user.service;
 
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.user.dto.UserRequestDto;
 import com.tarasantoniuk.user.dto.UserResponseDto;
 import com.tarasantoniuk.user.entity.User;
@@ -116,7 +117,7 @@ class UserServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> userService.getUserById(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found");
     }
 
@@ -164,7 +165,7 @@ class UserServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> userService.getUserByUsername("nonexistent"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found with username: nonexistent");
 
         verify(userRepository).findByUsername("nonexistent");

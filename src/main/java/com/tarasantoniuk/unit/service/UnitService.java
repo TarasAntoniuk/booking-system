@@ -10,6 +10,7 @@ import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,7 @@ public class UnitService {
     @Transactional
     public UnitResponseDto createUnit(CreateUnitRequestDto request) {
         User owner = userRepository.findById(request.getOwnerId())
-                .orElseThrow(() -> new IllegalArgumentException("Owner not found with id: " + request.getOwnerId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found with id: " + request.getOwnerId()));
 
         Unit unit = new Unit();
         unit.setNumberOfRooms(request.getNumberOfRooms());
@@ -52,7 +53,7 @@ public class UnitService {
 
     public UnitResponseDto getUnitById(Long id) {
         Unit unit = unitRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Unit not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Unit not found with id: " + id));
         return UnitResponseDto.from(unit);
     }
 

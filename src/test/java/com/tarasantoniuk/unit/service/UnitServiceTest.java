@@ -1,5 +1,6 @@
 package com.tarasantoniuk.unit.service;
 
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.statistic.service.UnitStatisticsService;
@@ -113,7 +114,7 @@ class UnitServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> unitService.createUnit(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Owner not found");
 
         verify(unitRepository, never()).save(any(Unit.class));
@@ -144,7 +145,7 @@ class UnitServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> unitService.getUnitById(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Unit not found");
     }
 
