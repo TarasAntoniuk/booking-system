@@ -145,8 +145,8 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         // Step 3: Verify booking appears in user's bookings
         mockMvc.perform(get("/api/bookings/user/" + userId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(bookingId));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(bookingId));
 
         // Step 4: Verify statistics updated (unit now unavailable)
         mockMvc.perform(get("/api/statistics/available-units"))

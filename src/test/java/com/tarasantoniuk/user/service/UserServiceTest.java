@@ -13,6 +13,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -122,7 +127,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Should get all users")
+    @DisplayName("Should get all users with pagination")
     void shouldGetAllUsers() {
         // Given
         User user2 = new User();
@@ -130,16 +135,19 @@ class UserServiceTest {
         user2.setUsername("user2");
         user2.setEmail("user2@example.com");
 
-        when(userRepository.findAll()).thenReturn(List.of(testUser, user2));
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<User> userPage = new PageImpl<>(List.of(testUser, user2), pageable, 2);
+        when(userRepository.findAll(pageable)).thenReturn(userPage);
 
         // When
-        List<UserResponseDto> users = userService.getAllUsers();
+        Page<UserResponseDto> users = userService.getAllUsers(pageable);
 
         // Then
-        assertThat(users).hasSize(2);
-        assertThat(users).extracting(UserResponseDto::getUsername)
+        assertThat(users.getContent()).hasSize(2);
+        assertThat(users.getContent()).extracting(UserResponseDto::getUsername)
                 .containsExactly("testuser", "user2");
-        verify(userRepository).findAll();
+        assertThat(users.getTotalElements()).isEqualTo(2);
+        verify(userRepository).findAll(pageable);
     }
 
     @Test

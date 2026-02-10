@@ -12,17 +12,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
 @Tag(name = "Bookings", description = "Booking management API - create, view and cancel accommodation bookings")
 public class BookingController {
+
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final BookingService bookingService;
 
@@ -70,18 +74,32 @@ public class BookingController {
     @GetMapping("/user/{userId}")
     @Operation(
             summary = "Get all bookings for a user",
-            description = "Retrieves all bookings (PENDING, CONFIRMED, CANCELLED) made by a specific user"
+            description = "Retrieves paginated bookings (PENDING, CONFIRMED, CANCELLED) made by a specific user"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of bookings retrieved successfully"),
+            @ApiResponse(responseCode = "200", description = "Page of bookings retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<List<BookingResponseDto>> getUserBookings(
+    public ResponseEntity<Page<BookingResponseDto>> getUserBookings(
             @Parameter(description = "User ID", example = "1")
-            @PathVariable Long userId
+            @PathVariable Long userId,
+            @Parameter(description = "Page number (0-based)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of items per page", example = "20")
+            @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Field to sort by", example = "id")
+            @RequestParam(defaultValue = "id") String sortBy,
+            @Parameter(description = "Sort direction", example = "asc", schema = @Schema(allowableValues = {"asc", "desc"}))
+            @RequestParam(defaultValue = "asc") String sortDir
     ) {
-        List<BookingResponseDto> bookings = bookingService.getUserBookings(userId);
+        int safeSize = Math.min(size, MAX_PAGE_SIZE);
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, safeSize, sort);
+
+        Page<BookingResponseDto> bookings = bookingService.getUserBookings(userId, pageable);
         return ResponseEntity.ok(bookings);
     }
 

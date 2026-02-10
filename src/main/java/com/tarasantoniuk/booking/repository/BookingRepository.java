@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +36,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      */
     @Query("SELECT b FROM Booking b JOIN FETCH b.unit WHERE b.user.id = :userId")
     List<Booking> findByUserIdWithUnit(@Param("userId") Long userId);
+
+    /**
+     * Find bookings by user ID with pagination and unit eagerly fetched (avoids N+1).
+     * Uses countQuery to avoid FETCH in COUNT query.
+     */
+    @Query(value = "SELECT b FROM Booking b JOIN FETCH b.unit WHERE b.user.id = :userId",
+            countQuery = "SELECT COUNT(b) FROM Booking b WHERE b.user.id = :userId")
+    Page<Booking> findByUserIdWithUnit(@Param("userId") Long userId, Pageable pageable);
 
     /**
      * Find booking by ID with unit eagerly fetched (avoids N+1)

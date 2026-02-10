@@ -24,6 +24,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -260,7 +265,7 @@ class BookingServiceTest {
     }
 
     @Test
-    @DisplayName("Should get user bookings successfully")
+    @DisplayName("Should get user bookings successfully with pagination")
     void shouldGetUserBookingsSuccessfully() {
         // Given
         Booking booking2 = new Booking();
@@ -271,16 +276,19 @@ class BookingServiceTest {
         booking2.setEndDate(LocalDate.now().plusDays(7));
         booking2.setStatus(BookingStatus.CONFIRMED);
 
-        when(bookingRepository.findByUserIdWithUnit(1L)).thenReturn(List.of(testBooking, booking2));
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Booking> bookingPage = new PageImpl<>(List.of(testBooking, booking2), pageable, 2);
+        when(bookingRepository.findByUserIdWithUnit(1L, pageable)).thenReturn(bookingPage);
 
         // When
-        List<BookingResponseDto> bookings = bookingService.getUserBookings(1L);
+        Page<BookingResponseDto> bookings = bookingService.getUserBookings(1L, pageable);
 
         // Then
-        assertThat(bookings).hasSize(2);
-        assertThat(bookings.get(0).getId()).isEqualTo(1L);
-        assertThat(bookings.get(1).getId()).isEqualTo(2L);
-        verify(bookingRepository).findByUserIdWithUnit(1L);
+        assertThat(bookings.getContent()).hasSize(2);
+        assertThat(bookings.getContent().get(0).getId()).isEqualTo(1L);
+        assertThat(bookings.getContent().get(1).getId()).isEqualTo(2L);
+        assertThat(bookings.getTotalElements()).isEqualTo(2);
+        verify(bookingRepository).findByUserIdWithUnit(1L, pageable);
     }
 
     @Test

@@ -17,6 +17,8 @@ import com.tarasantoniuk.user.repository.UserRepository;
 import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +28,6 @@ import java.time.temporal.ChronoUnit;
 
 import static com.tarasantoniuk.booking.config.BookingTimeConstants.BOOKING_EXPIRATION_MINUTES;
 import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_RATE;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -109,9 +109,8 @@ public class BookingService {
         return BookingResponseDto.from(booking, totalCost);
     }
 
-    public List<BookingResponseDto> getUserBookings(Long userId) {
-        List<Booking> bookings = bookingRepository.findByUserIdWithUnit(userId);
-        return bookings.stream()
+    public Page<BookingResponseDto> getUserBookings(Long userId, Pageable pageable) {
+        return bookingRepository.findByUserIdWithUnit(userId, pageable)
                 .map(booking -> {
                     BigDecimal totalCost = calculateTotalCost(
                             booking.getUnit(),
@@ -119,8 +118,7 @@ public class BookingService {
                             booking.getEndDate()
                     );
                     return BookingResponseDto.from(booking, totalCost);
-                })
-                .collect(Collectors.toList());
+                });
     }
 
     @Transactional
