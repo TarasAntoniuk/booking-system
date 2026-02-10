@@ -9,7 +9,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
+import org.springframework.data.redis.RedisConnectionFailureException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -108,5 +111,41 @@ class CacheServiceTest {
 
         // Then
         verify(redisTemplate).delete(AVAILABLE_UNITS_KEY);
+    }
+
+    @Test
+    @DisplayName("Should return null when Redis is down during read")
+    void shouldReturnNullWhenRedisDownDuringRead() {
+        // Given
+        when(redisTemplate.opsForValue()).thenThrow(new RedisConnectionFailureException("Connection refused"));
+
+        // When
+        Long result = cacheService.getAvailableUnitsCount();
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    @DisplayName("Should not throw when Redis is down during cache write")
+    void shouldNotThrowWhenRedisDownDuringWrite() {
+        // Given
+        when(redisTemplate.opsForValue()).thenThrow(new RedisConnectionFailureException("Connection refused"));
+
+        // When & Then
+        assertThatCode(() -> cacheService.cacheAvailableUnitsCount(15L))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Should not throw when Redis is down during invalidation")
+    void shouldNotThrowWhenRedisDownDuringInvalidation() {
+        // Given
+        when(redisTemplate.delete(AVAILABLE_UNITS_KEY))
+                .thenThrow(new RedisConnectionFailureException("Connection refused"));
+
+        // When & Then
+        assertThatCode(() -> cacheService.invalidateAvailableUnitsCount())
+                .doesNotThrowAnyException();
     }
 }
