@@ -190,7 +190,7 @@ class BookingServiceTest {
     @DisplayName("Should get booking by id successfully")
     void shouldGetBookingByIdSuccessfully() {
         // Given
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
+        when(bookingRepository.findByIdWithUnit(1L)).thenReturn(Optional.of(testBooking));
 
         // When
         BookingResponseDto response = bookingService.getBookingById(1L);
@@ -199,14 +199,14 @@ class BookingServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getStatus()).isEqualTo(BookingStatus.PENDING);
-        verify(bookingRepository).findById(1L);
+        verify(bookingRepository).findByIdWithUnit(1L);
     }
 
     @Test
     @DisplayName("Should throw exception when booking not found")
     void shouldThrowExceptionWhenBookingNotFound() {
         // Given
-        when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
+        when(bookingRepository.findByIdWithUnit(999L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> bookingService.getBookingById(999L))
@@ -226,7 +226,7 @@ class BookingServiceTest {
         booking2.setEndDate(LocalDate.now().plusDays(7));
         booking2.setStatus(BookingStatus.CONFIRMED);
 
-        when(bookingRepository.findByUserId(1L)).thenReturn(List.of(testBooking, booking2));
+        when(bookingRepository.findByUserIdWithUnit(1L)).thenReturn(List.of(testBooking, booking2));
 
         // When
         List<BookingResponseDto> bookings = bookingService.getUserBookings(1L);
@@ -235,7 +235,7 @@ class BookingServiceTest {
         assertThat(bookings).hasSize(2);
         assertThat(bookings.get(0).getId()).isEqualTo(1L);
         assertThat(bookings.get(1).getId()).isEqualTo(2L);
-        verify(bookingRepository).findByUserId(1L);
+        verify(bookingRepository).findByUserIdWithUnit(1L);
     }
 
     @Test
