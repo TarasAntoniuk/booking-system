@@ -6,6 +6,7 @@ import com.tarasantoniuk.user.dto.UserResponseDto;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class UserService {
 
@@ -21,11 +23,15 @@ public class UserService {
 
     @Transactional
     public UserResponseDto createUser(UserRequestDto request) {
+        log.info("Creating user: username={}", request.getUsername());
+
         if (userRepository.existsByUsername(request.getUsername())) {
+            log.warn("Duplicate username attempt: {}", request.getUsername());
             throw new IllegalArgumentException("Username already exists");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Duplicate email attempt: {}", request.getEmail());
             throw new IllegalArgumentException("Email already exists");
         }
 
@@ -34,6 +40,7 @@ public class UserService {
         user.setEmail(request.getEmail());
 
         User saved = userRepository.save(user);
+        log.info("User created successfully: userId={}, username={}", saved.getId(), saved.getUsername());
         return UserResponseDto.from(saved);
     }
 

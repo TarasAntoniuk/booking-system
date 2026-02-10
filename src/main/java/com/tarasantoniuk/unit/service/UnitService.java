@@ -12,6 +12,7 @@ import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
 import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class UnitService {
 
@@ -30,6 +32,9 @@ public class UnitService {
 
     @Transactional
     public UnitResponseDto createUnit(CreateUnitRequestDto request) {
+        log.info("Creating unit: type={}, rooms={}, ownerId={}",
+                request.getAccommodationType(), request.getNumberOfRooms(), request.getOwnerId());
+
         User owner = userRepository.findById(request.getOwnerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Owner not found with id: " + request.getOwnerId()));
 
@@ -47,6 +52,8 @@ public class UnitService {
         eventService.createEvent(EventType.UNIT_CREATED, saved.getId());
 
         unitStatisticsService.invalidateAvailableUnitsCache();
+
+        log.info("Unit created successfully: unitId={}, ownerId={}", saved.getId(), owner.getId());
 
         return UnitResponseDto.from(saved);
     }

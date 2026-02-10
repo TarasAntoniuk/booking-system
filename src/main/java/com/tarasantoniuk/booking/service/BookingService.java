@@ -16,6 +16,7 @@ import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
 import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class BookingService {
 
@@ -43,6 +45,9 @@ public class BookingService {
 
     @Transactional
     public BookingResponseDto createBooking(CreateBookingRequestDto request) {
+        log.info("Creating booking for unitId={}, userId={}, dates={} to {}",
+                request.getUnitId(), request.getUserId(), request.getStartDate(), request.getEndDate());
+
         // 1. Acquire pessimistic lock on unit to prevent race conditions
         // This ensures only one transaction can create a booking for this unit at a time
         Unit unit = unitRepository.findByIdWithLock(request.getUnitId())
@@ -85,6 +90,9 @@ public class BookingService {
         // 8. Invalidate cache
         unitStatisticsService.invalidateAvailableUnitsCache();
 
+        log.info("Booking created successfully: bookingId={}, unitId={}, userId={}",
+                saved.getId(), unit.getId(), user.getId());
+
         return BookingResponseDto.from(saved, totalCost);
     }
 
@@ -117,14 +125,19 @@ public class BookingService {
 
     @Transactional
     public void cancelBooking(Long bookingId, Long userId) {
+        log.info("Cancelling booking: bookingId={}, userId={}", bookingId, userId);
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         if (!booking.getUser().getId().equals(userId)) {
+            log.warn("Unauthorized cancel attempt: bookingId={}, requestUserId={}, ownerUserId={}",
+                    bookingId, userId, booking.getUser().getId());
             throw new IllegalArgumentException("You can only cancel your own bookings");
         }
 
         if (booking.getStatus() == BookingStatus.CANCELLED) {
+            log.warn("Attempt to cancel already cancelled booking: bookingId={}", bookingId);
             throw new IllegalArgumentException("Booking is already cancelled");
         }
 
@@ -135,6 +148,8 @@ public class BookingService {
         eventService.createEvent(EventType.BOOKING_CANCELLED, bookingId);
 
         unitStatisticsService.invalidateAvailableUnitsCache();
+
+        log.info("Booking cancelled successfully: bookingId={}", bookingId);
     }
 
     private boolean isUnitAvailable(Long unitId, java.time.LocalDate startDate, java.time.LocalDate endDate) {
