@@ -33,25 +33,29 @@ public class BookingExpirationScheduler {
     @Scheduled(fixedDelay = SCHEDULER_FIXED_DELAY_MS, initialDelay = SCHEDULER_INITIAL_DELAY_MS)
     @Transactional
     public void cancelExpiredBookings() {
-        LocalDateTime now = LocalDateTime.now();
+        try {
+            LocalDateTime now = LocalDateTime.now();
 
-        // 1. Get IDs of expired bookings (for audit events)
-        List<Long> expiredBookingIds = bookingRepository.findExpiredPendingBookingIds(now);
+            // 1. Get IDs of expired bookings (for audit events)
+            List<Long> expiredBookingIds = bookingRepository.findExpiredPendingBookingIds(now);
 
-        if (expiredBookingIds.isEmpty()) {
-            return;
+            if (expiredBookingIds.isEmpty()) {
+                return;
+            }
+
+            log.info("Found {} expired bookings to cancel", expiredBookingIds.size());
+
+            // 2. Bulk cancel - single UPDATE query
+            int cancelledCount = bookingRepository.bulkCancelExpiredBookings(now);
+
+            // 3. Create audit events in batch
+            eventService.createEventsInBatch(EventType.BOOKING_EXPIRED, expiredBookingIds);
+
+            unitStatisticsService.invalidateAvailableUnitsCache();
+
+            log.info("Successfully cancelled {} expired bookings", cancelledCount);
+        } catch (Exception e) {
+            log.error("Failed to cancel expired bookings", e);
         }
-
-        log.info("Found {} expired bookings to cancel", expiredBookingIds.size());
-
-        // 2. Bulk cancel - single UPDATE query
-        int cancelledCount = bookingRepository.bulkCancelExpiredBookings(now);
-
-        // 3. Create audit events in batch
-        eventService.createEventsInBatch(EventType.BOOKING_EXPIRED, expiredBookingIds);
-
-        unitStatisticsService.invalidateAvailableUnitsCache();
-
-        log.info("Successfully cancelled {} expired bookings", cancelledCount);
     }
 }
