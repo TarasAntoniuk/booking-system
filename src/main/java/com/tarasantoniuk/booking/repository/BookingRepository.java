@@ -2,7 +2,9 @@ package com.tarasantoniuk.booking.repository;
 
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,6 +39,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      */
     @Query("SELECT b FROM Booking b JOIN FETCH b.unit WHERE b.id = :id")
     Optional<Booking> findByIdWithUnit(@Param("id") Long id);
+
+    /**
+     * Find booking by ID with pessimistic write lock (prevents concurrent payment processing)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
+    Optional<Booking> findByIdWithLock(@Param("id") Long id);
 
     /**
      * Find expired bookings with PENDING status
