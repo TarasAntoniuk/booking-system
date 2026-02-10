@@ -24,7 +24,7 @@ public class Unit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "units_id_seq")
-    @SequenceGenerator(name = "units_id_seq", sequenceName = "units_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "units_id_seq", sequenceName = "units_id_seq", allocationSize = 50)
     private Long id;
 
     @Column(name = "number_of_rooms", nullable = false)
