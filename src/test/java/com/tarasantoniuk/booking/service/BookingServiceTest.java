@@ -5,17 +5,15 @@ import com.tarasantoniuk.booking.dto.BookingResponseDto;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
+import com.tarasantoniuk.booking.event.BookingEvent;
 import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.repository.BookingRepository;
-import com.tarasantoniuk.event.enums.EventType;
-import com.tarasantoniuk.event.service.EventService;
-import com.tarasantoniuk.payment.service.PaymentService;
-import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,13 +52,7 @@ class BookingServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private PaymentService paymentService;
-
-    @Mock
-    private EventService eventService;
-
-    @Mock
-    private UnitStatisticsService unitStatisticsService;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private BookingService bookingService;
@@ -119,9 +111,7 @@ class BookingServiceTest {
         verify(unitRepository).findByIdWithLock(1L);
         verify(userRepository).findById(1L);
         verify(bookingRepository).save(any(Booking.class));
-        verify(paymentService).createPayment(eq(testBooking), any(BigDecimal.class));
-        verify(eventService).createEvent(EventType.BOOKING_CREATED, 1L);
-        verify(unitStatisticsService).invalidateAvailableUnitsCache();
+        verify(eventPublisher).publishEvent(any(BookingEvent.class));
     }
 
     @Test
@@ -304,8 +294,7 @@ class BookingServiceTest {
         // Then
         verify(bookingRepository).findById(1L);
         verify(bookingRepository).save(testBooking);
-        verify(eventService).createEvent(EventType.BOOKING_CANCELLED, 1L);
-        verify(unitStatisticsService).invalidateAvailableUnitsCache();
+        verify(eventPublisher).publishEvent(any(BookingEvent.class));
         assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
     }
 

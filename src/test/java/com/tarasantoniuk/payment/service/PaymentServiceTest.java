@@ -88,10 +88,11 @@ class PaymentServiceTest {
     @DisplayName("Should create payment successfully")
     void shouldCreatePaymentSuccessfully() {
         // Given
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
         when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
 
         // When
-        Payment result = paymentService.createPayment(testBooking, BigDecimal.valueOf(230.00));
+        Payment result = paymentService.createPaymentForBooking(1L, BigDecimal.valueOf(230.00));
 
         // Then
         assertThat(result).isNotNull();
@@ -99,6 +100,7 @@ class PaymentServiceTest {
         assertThat(result.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(230.00));
         assertThat(result.getStatus()).isEqualTo(PaymentStatus.PENDING);
 
+        verify(bookingRepository).findById(1L);
         verify(paymentRepository).save(any(Payment.class));
     }
 

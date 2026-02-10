@@ -40,8 +40,11 @@ public class PaymentService {
     }
 
     @Transactional
-    public Payment createPayment(Booking booking, BigDecimal amount) {
-        log.info("Creating payment for bookingId={}, amount={}", booking.getId(), amount);
+    public Payment createPaymentForBooking(Long bookingId, BigDecimal amount) {
+        log.info("Creating payment for bookingId={}, amount={}", bookingId, amount);
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         Payment payment = new Payment();
         payment.setBooking(booking);
@@ -49,7 +52,7 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.PENDING);
 
         Payment saved = paymentRepository.save(payment);
-        log.info("Payment created: paymentId={}, bookingId={}", saved.getId(), booking.getId());
+        log.info("Payment created: paymentId={}, bookingId={}", saved.getId(), bookingId);
         return saved;
     }
 

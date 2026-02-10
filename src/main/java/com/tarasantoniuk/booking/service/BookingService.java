@@ -4,12 +4,9 @@ import com.tarasantoniuk.booking.dto.BookingResponseDto;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
+import com.tarasantoniuk.booking.event.BookingEvent;
 import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.repository.BookingRepository;
-import com.tarasantoniuk.event.enums.EventType;
-import com.tarasantoniuk.event.service.EventService;
-import com.tarasantoniuk.payment.service.PaymentService;
-import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
@@ -17,6 +14,7 @@ import com.tarasantoniuk.user.repository.UserRepository;
 import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,9 +36,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
-    private final PaymentService paymentService;
-    private final EventService eventService;
-    private final UnitStatisticsService unitStatisticsService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Transactional
@@ -81,14 +77,8 @@ public class BookingService {
         // 5. Calculate total cost
         BigDecimal totalCost = calculateTotalCost(unit, request.getStartDate(), request.getEndDate());
 
-        // 6. Create payment
-        paymentService.createPayment(saved, totalCost);
-
-        // 7. Create event
-        eventService.createEvent(EventType.BOOKING_CREATED, saved.getId());
-
-        // 8. Invalidate cache
-        unitStatisticsService.invalidateAvailableUnitsCache();
+        // 6. Publish event (triggers payment creation, audit event, cache invalidation)
+        eventPublisher.publishEvent(BookingEvent.created(saved.getId(), totalCost));
 
         log.info("Booking created successfully: bookingId={}, unitId={}, userId={}",
                 saved.getId(), unit.getId(), user.getId());
@@ -142,10 +132,7 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
-        // Create event
-        eventService.createEvent(EventType.BOOKING_CANCELLED, bookingId);
-
-        unitStatisticsService.invalidateAvailableUnitsCache();
+        eventPublisher.publishEvent(BookingEvent.cancelled(bookingId));
 
         log.info("Booking cancelled successfully: bookingId={}", bookingId);
     }
@@ -159,8 +146,7 @@ public class BookingService {
         booking.setExpiresAt(null);
         bookingRepository.save(booking);
 
-        eventService.createEvent(EventType.BOOKING_CONFIRMED, bookingId);
-        unitStatisticsService.invalidateAvailableUnitsCache();
+        eventPublisher.publishEvent(BookingEvent.confirmed(bookingId));
 
         log.info("Booking confirmed: bookingId={}", bookingId);
     }
