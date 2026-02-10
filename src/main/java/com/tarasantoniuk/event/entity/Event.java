@@ -1,5 +1,6 @@
 package com.tarasantoniuk.event.entity;
 
+import com.tarasantoniuk.event.enums.EntityType;
 import com.tarasantoniuk.event.enums.EventType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,10 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 100)
     private EventType eventType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "entity_type", nullable = false, length = 50)
+    private EntityType entityType;
 
     @Column(name = "entity_id")
     private Long entityId;
