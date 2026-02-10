@@ -24,15 +24,20 @@ public class CacheService {
      * @return cached count, or null if not in cache
      */
     public Long getAvailableUnitsCount() {
-        Object cached = redisTemplate.opsForValue().get(AVAILABLE_UNITS_KEY);
+        try {
+            Object cached = redisTemplate.opsForValue().get(AVAILABLE_UNITS_KEY);
 
-        if (cached == null) {
-            log.debug("Cache miss for available units count");
+            if (cached == null) {
+                log.debug("Cache miss for available units count");
+                return null;
+            }
+
+            log.debug("Cache hit for available units count: {}", cached);
+            return ((Number) cached).longValue();
+        } catch (Exception e) {
+            log.warn("Redis unavailable for cache read, falling back to database", e);
             return null;
         }
-
-        log.debug("Cache hit for available units count: {}", cached);
-        return ((Number) cached).longValue();
     }
 
     /**
@@ -41,8 +46,12 @@ public class CacheService {
      * @param count the count to cache
      */
     public void cacheAvailableUnitsCount(Long count) {
-        redisTemplate.opsForValue().set(AVAILABLE_UNITS_KEY, count);
-        log.debug("Cached available units count: {}", count);
+        try {
+            redisTemplate.opsForValue().set(AVAILABLE_UNITS_KEY, count);
+            log.debug("Cached available units count: {}", count);
+        } catch (Exception e) {
+            log.warn("Redis unavailable for cache write, result not cached", e);
+        }
     }
 
     /**
@@ -54,7 +63,11 @@ public class CacheService {
      * Trade-off: Fast invalidation vs first user after invalidation waits for DB query.
      */
     public void invalidateAvailableUnitsCount() {
-        Boolean deleted = redisTemplate.delete(AVAILABLE_UNITS_KEY);
-        log.debug("Invalidated available units cache, deleted: {}", deleted);
+        try {
+            Boolean deleted = redisTemplate.delete(AVAILABLE_UNITS_KEY);
+            log.debug("Invalidated available units cache, deleted: {}", deleted);
+        } catch (Exception e) {
+            log.warn("Redis unavailable for cache invalidation", e);
+        }
     }
 }

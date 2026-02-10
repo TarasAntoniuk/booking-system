@@ -64,7 +64,11 @@ public class UnitStatisticsService {
      */
     @PostConstruct
     public void warmUpCache() {
-        log.info("Warming up unit statistics cache on startup...");
-        calculateAndCacheAvailableUnits();
+        try {
+            log.info("Warming up unit statistics cache on startup...");
+            calculateAndCacheAvailableUnits();
+        } catch (Exception e) {
+            log.warn("Failed to warm up cache on startup, application will use DB fallback", e);
+        }
     }
 }

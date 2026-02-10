@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -93,6 +94,17 @@ class UnitStatisticsServiceTest {
         // Then
         verify(unitRepository).countAvailableUnits();
         verify(cacheService).cacheAvailableUnitsCount(50L);
+    }
+
+    @Test
+    @DisplayName("Should not crash when warmup fails due to DB or Redis error")
+    void shouldNotCrashWhenWarmupFails() {
+        // Given
+        when(unitRepository.countAvailableUnits()).thenThrow(new RuntimeException("DB unavailable"));
+
+        // When & Then
+        assertThatCode(() -> unitStatisticsService.warmUpCache())
+                .doesNotThrowAnyException();
     }
 
     @Test
