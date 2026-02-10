@@ -150,6 +150,21 @@ public class BookingService {
         log.info("Booking cancelled successfully: bookingId={}", bookingId);
     }
 
+    @Transactional
+    public void confirmBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setExpiresAt(null);
+        bookingRepository.save(booking);
+
+        eventService.createEvent(EventType.BOOKING_CONFIRMED, bookingId);
+        unitStatisticsService.invalidateAvailableUnitsCache();
+
+        log.info("Booking confirmed: bookingId={}", bookingId);
+    }
+
     private boolean isUnitAvailable(Long unitId, java.time.LocalDate startDate, java.time.LocalDate endDate) {
         return bookingRepository.findConflictingBookings(unitId, startDate, endDate).isEmpty();
     }

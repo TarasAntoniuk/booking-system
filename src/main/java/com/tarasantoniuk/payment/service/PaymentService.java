@@ -4,6 +4,7 @@ import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
+import com.tarasantoniuk.booking.service.BookingService;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.payment.dto.PaymentResponseDto;
@@ -11,24 +12,32 @@ import com.tarasantoniuk.payment.dto.ProcessPaymentRequestDto;
 import com.tarasantoniuk.payment.entity.Payment;
 import com.tarasantoniuk.payment.enums.PaymentStatus;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
-import com.tarasantoniuk.statistic.service.UnitStatisticsService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
+    private final BookingService bookingService;
     private final EventService eventService;
-    private final UnitStatisticsService unitStatisticsService;
+
+    public PaymentService(PaymentRepository paymentRepository,
+                          BookingRepository bookingRepository,
+                          @Lazy BookingService bookingService,
+                          EventService eventService) {
+        this.paymentRepository = paymentRepository;
+        this.bookingRepository = bookingRepository;
+        this.bookingService = bookingService;
+        this.eventService = eventService;
+    }
 
     @Transactional
     public Payment createPayment(Booking booking, BigDecimal amount) {
@@ -67,17 +76,11 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.COMPLETED);
         paymentRepository.save(payment);
 
-        // 5. Confirm booking
-        booking.setStatus(BookingStatus.CONFIRMED);
-        booking.setExpiresAt(null); // Remove expiration
-        bookingRepository.save(booking);
-
-        // 6. Create events
+        // 5. Create payment event
         eventService.createEvent(EventType.PAYMENT_COMPLETED, payment.getId());
-        eventService.createEvent(EventType.BOOKING_CONFIRMED, booking.getId());
 
-        // 7. Invalidate cache
-        unitStatisticsService.invalidateAvailableUnitsCache();
+        // 6. Confirm booking (delegates to BookingService to respect domain boundary)
+        bookingService.confirmBooking(booking.getId());
 
         log.info("Payment processed successfully: paymentId={}, bookingId={}", payment.getId(), booking.getId());
 

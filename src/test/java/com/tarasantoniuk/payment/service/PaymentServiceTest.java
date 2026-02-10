@@ -4,6 +4,7 @@ import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
+import com.tarasantoniuk.booking.service.BookingService;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.payment.dto.PaymentResponseDto;
@@ -11,7 +12,6 @@ import com.tarasantoniuk.payment.dto.ProcessPaymentRequestDto;
 import com.tarasantoniuk.payment.entity.Payment;
 import com.tarasantoniuk.payment.enums.PaymentStatus;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
-import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.user.entity.User;
@@ -43,10 +43,10 @@ class PaymentServiceTest {
     private BookingRepository bookingRepository;
 
     @Mock
-    private EventService eventService;
+    private BookingService bookingService;
 
     @Mock
-    private UnitStatisticsService unitStatisticsService;
+    private EventService eventService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -112,7 +112,6 @@ class PaymentServiceTest {
         when(bookingRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testBooking));
         when(paymentRepository.findByBookingId(1L)).thenReturn(Optional.of(testPayment));
         when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
-        when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
 
         // When
         PaymentResponseDto response = paymentService.processPayment(request);
@@ -125,14 +124,10 @@ class PaymentServiceTest {
         verify(bookingRepository).findByIdWithLock(1L);
         verify(paymentRepository).findByBookingId(1L);
         verify(paymentRepository).save(testPayment);
-        verify(bookingRepository).save(testBooking);
         verify(eventService).createEvent(EventType.PAYMENT_COMPLETED, 1L);
-        verify(eventService).createEvent(EventType.BOOKING_CONFIRMED, 1L);
-        verify(unitStatisticsService).invalidateAvailableUnitsCache();
+        verify(bookingService).confirmBooking(1L);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
-        assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-        assertThat(testBooking.getExpiresAt()).isNull();
     }
 
     @Test
