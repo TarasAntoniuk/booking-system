@@ -109,7 +109,7 @@ class PaymentServiceTest {
         ProcessPaymentRequestDto request = new ProcessPaymentRequestDto();
         request.setBookingId(1L);
 
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
+        when(bookingRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testBooking));
         when(paymentRepository.findByBookingId(1L)).thenReturn(Optional.of(testPayment));
         when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
         when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
@@ -122,7 +122,7 @@ class PaymentServiceTest {
         assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
 
-        verify(bookingRepository).findById(1L);
+        verify(bookingRepository).findByIdWithLock(1L);
         verify(paymentRepository).findByBookingId(1L);
         verify(paymentRepository).save(testPayment);
         verify(bookingRepository).save(testBooking);
@@ -142,7 +142,7 @@ class PaymentServiceTest {
         ProcessPaymentRequestDto request = new ProcessPaymentRequestDto();
         request.setBookingId(999L);
 
-        when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
+        when(bookingRepository.findByIdWithLock(999L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> paymentService.processPayment(request))
@@ -160,7 +160,7 @@ class PaymentServiceTest {
         ProcessPaymentRequestDto request = new ProcessPaymentRequestDto();
         request.setBookingId(1L);
 
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
+        when(bookingRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testBooking));
 
         // When & Then
         assertThatThrownBy(() -> paymentService.processPayment(request))
@@ -177,7 +177,7 @@ class PaymentServiceTest {
         ProcessPaymentRequestDto request = new ProcessPaymentRequestDto();
         request.setBookingId(1L);
 
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
+        when(bookingRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testBooking));
         when(paymentRepository.findByBookingId(1L)).thenReturn(Optional.empty());
 
         // When & Then

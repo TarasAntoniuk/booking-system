@@ -40,8 +40,8 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponseDto processPayment(ProcessPaymentRequestDto request) {
-        // 1. Find booking
-        Booking booking = bookingRepository.findById(request.getBookingId())
+        // 1. Find booking with pessimistic lock to prevent concurrent payment processing
+        Booking booking = bookingRepository.findByIdWithLock(request.getBookingId())
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + request.getBookingId()));
 
         // 2. Check if booking is still pending
