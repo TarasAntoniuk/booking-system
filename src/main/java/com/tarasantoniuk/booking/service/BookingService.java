@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static com.tarasantoniuk.booking.config.BookingTimeConstants.BOOKING_EXPIRATION_MINUTES;
-import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_RATE;
+import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_MULTIPLIER;
 
 @Service
 @RequiredArgsConstructor
@@ -161,7 +161,6 @@ public class BookingService {
         }
 
         BigDecimal baseCost = unit.getBaseCost().multiply(BigDecimal.valueOf(days));
-        BigDecimal markup = baseCost.multiply(MARKUP_RATE);
-        return baseCost.add(markup);
+        return baseCost.multiply(MARKUP_MULTIPLIER);
     }
 }
