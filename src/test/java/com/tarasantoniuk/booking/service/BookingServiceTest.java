@@ -187,6 +187,51 @@ class BookingServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw exception when end date is before start date")
+    void shouldThrowExceptionWhenEndDateBeforeStartDate() {
+        // Given
+        CreateBookingRequestDto request = new CreateBookingRequestDto();
+        request.setUnitId(1L);
+        request.setUserId(1L);
+        request.setStartDate(LocalDate.now().plusDays(5));
+        request.setEndDate(LocalDate.now().plusDays(2));
+
+        when(unitRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testUnit));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        // When & Then
+        assertThatThrownBy(() -> bookingService.createBooking(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("End date must be on or after start date");
+
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    @DisplayName("Should allow booking when end date equals start date")
+    void shouldAllowBookingWhenEndDateEqualsStartDate() {
+        // Given
+        LocalDate sameDate = LocalDate.now().plusDays(5);
+        CreateBookingRequestDto request = new CreateBookingRequestDto();
+        request.setUnitId(1L);
+        request.setUserId(1L);
+        request.setStartDate(sameDate);
+        request.setEndDate(sameDate);
+
+        when(unitRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testUnit));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(bookingRepository.findConflictingBookings(eq(1L), any(), any())).thenReturn(List.of());
+        when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
+
+        // When
+        BookingResponseDto response = bookingService.createBooking(request);
+
+        // Then
+        assertThat(response).isNotNull();
+        verify(bookingRepository).save(any(Booking.class));
+    }
+
+    @Test
     @DisplayName("Should get booking by id successfully")
     void shouldGetBookingByIdSuccessfully() {
         // Given
