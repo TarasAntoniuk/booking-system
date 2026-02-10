@@ -129,6 +129,11 @@ public class BookingService {
             throw new IllegalArgumentException("Booking is already cancelled");
         }
 
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            log.warn("Cancelling confirmed booking {} - refund logic not yet implemented", bookingId);
+            // TODO: Implement refund logic for confirmed bookings
+        }
+
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
