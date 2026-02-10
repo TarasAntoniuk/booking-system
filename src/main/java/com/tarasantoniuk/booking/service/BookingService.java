@@ -52,7 +52,12 @@ public class BookingService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getUserId()));
 
-        // 3. Check unit availability (now safe from race conditions due to lock)
+        // 3. Validate date range
+        if (request.getEndDate().isBefore(request.getStartDate())) {
+            throw new IllegalArgumentException("End date must be on or after start date");
+        }
+
+        // 4. Check unit availability (now safe from race conditions due to lock)
         if (!isUnitAvailable(request.getUnitId(), request.getStartDate(), request.getEndDate())) {
             throw new UnitNotAvailableException("Unit is not available for selected dates");
         }
