@@ -11,10 +11,10 @@ import java.util.List;
 
 /**
  * Web configuration for CORS (Cross-Origin Resource Sharing)
- *
+ * <p>
  * This configuration allows the API to be accessed from different origins,
  * which is necessary for frontend applications running on different ports/domains.
- *
+ * <p>
  * IMPORTANT: In production, you should restrict allowedOriginPatterns to specific
  * domains instead of using "*". For example:
  * - config.setAllowedOriginPatterns(List.of("https://yourdomain.com", "https://app.yourdomain.com"));

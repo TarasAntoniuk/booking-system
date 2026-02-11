@@ -1,7 +1,5 @@
 package com.tarasantoniuk.booking.service;
 
-import com.tarasantoniuk.common.TestFixtures;
-import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.dto.BookingResponseDto;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.entity.Booking;
@@ -9,11 +7,12 @@ import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.event.BookingEvent;
 import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.repository.BookingRepository;
+import com.tarasantoniuk.common.TestFixtures;
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
-import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,18 +20,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;

@@ -3,15 +3,14 @@ package com.tarasantoniuk.booking.repository;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -68,10 +67,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Used by scheduler to create audit events before bulk cancellation.
      */
     @Query("""
-        SELECT b.id FROM Booking b
-        WHERE b.status = 'PENDING'
-        AND b.expiresAt < :now
-    """)
+                SELECT b.id FROM Booking b
+                WHERE b.status = 'PENDING'
+                AND b.expiresAt < :now
+            """)
     List<Long> findExpiredPendingBookingIds(@Param("now") LocalDateTime now);
 
     /**
@@ -81,11 +80,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      */
     @Modifying(clearAutomatically = true)
     @Query("""
-        UPDATE Booking b
-        SET b.status = 'CANCELLED'
-        WHERE b.status = 'PENDING'
-        AND b.expiresAt < :now
-    """)
+                UPDATE Booking b
+                SET b.status = 'CANCELLED'
+                WHERE b.status = 'PENDING'
+                AND b.expiresAt < :now
+            """)
     int bulkCancelExpiredBookings(@Param("now") LocalDateTime now);
 
     /**
@@ -93,13 +92,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Checks for both PENDING and CONFIRMED bookings to prevent double booking
      */
     @Query("""
-        SELECT b FROM Booking b
-        WHERE b.unit.id = :unitId
-        AND b.status IN ('PENDING', 'CONFIRMED')
-        AND (
-            (b.startDate <= :endDate AND b.endDate >= :startDate)
-        )
-    """)
+                SELECT b FROM Booking b
+                WHERE b.unit.id = :unitId
+                AND b.status IN ('PENDING', 'CONFIRMED')
+                AND (
+                    (b.startDate <= :endDate AND b.endDate >= :startDate)
+                )
+            """)
     List<Booking> findConflictingBookings(
             @Param("unitId") Long unitId,
             @Param("startDate") LocalDate startDate,

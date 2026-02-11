@@ -1,5 +1,6 @@
 package com.tarasantoniuk.unit.service;
 
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.statistic.service.UnitStatisticsService;
@@ -10,7 +11,6 @@ import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
-import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

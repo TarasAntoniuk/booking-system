@@ -56,10 +56,10 @@ public class CacheService {
 
     /**
      * Invalidate (delete) the available units count from cache.
-     *
+     * <p>
      * Note: Uses lazy invalidation for simplicity. Next request will recalculate.
      * For production with high traffic, consider eager invalidation or async refresh.
-     *
+     * <p>
      * Trade-off: Fast invalidation vs first user after invalidation waits for DB query.
      */
     public void invalidateAvailableUnitsCount() {

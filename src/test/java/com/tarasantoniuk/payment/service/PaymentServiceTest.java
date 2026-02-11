@@ -1,11 +1,11 @@
 package com.tarasantoniuk.payment.service;
 
-import com.tarasantoniuk.common.TestFixtures;
-import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.booking.service.BookingService;
+import com.tarasantoniuk.common.TestFixtures;
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.payment.dto.PaymentResponseDto;
@@ -26,7 +26,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
