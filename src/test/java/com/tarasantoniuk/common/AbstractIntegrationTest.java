@@ -9,10 +9,10 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
  * Base class for integration tests using Testcontainers.
- *
+ * <p>
  * Provides PostgreSQL 17 and Redis 7 containers for production-like testing.
  * Tests extending this class get both containers started automatically.
- *
+ * <p>
  * Uses the singleton container pattern to ensure containers stay alive
  * for the entire test suite, preventing stale connection issues when
  * Spring caches contexts across multiple subclasses.

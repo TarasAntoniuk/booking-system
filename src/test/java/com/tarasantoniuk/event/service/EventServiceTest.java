@@ -1,6 +1,7 @@
 package com.tarasantoniuk.event.service;
 
 import com.tarasantoniuk.event.entity.Event;
+import com.tarasantoniuk.event.enums.EntityType;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
@@ -36,6 +37,7 @@ class EventServiceTest {
         testEvent = new Event();
         testEvent.setId(1L);
         testEvent.setEventType(EventType.BOOKING_CREATED);
+        testEvent.setEntityType(EntityType.BOOKING);
         testEvent.setEntityId(100L);
         testEvent.setCreatedAt(LocalDateTime.now());
     }
@@ -53,6 +55,7 @@ class EventServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getEventType()).isEqualTo(EventType.BOOKING_CREATED);
+        assertThat(result.getEntityType()).isEqualTo(EntityType.BOOKING);
         assertThat(result.getEntityId()).isEqualTo(100L);
 
         verify(eventRepository).save(any(Event.class));
@@ -83,6 +86,7 @@ class EventServiceTest {
     void shouldCreateEventForUnitCreated() {
         // Given
         testEvent.setEventType(EventType.UNIT_CREATED);
+        testEvent.setEntityType(EntityType.UNIT);
         testEvent.setEntityId(5L);
         when(eventRepository.save(any(Event.class))).thenReturn(testEvent);
 
@@ -92,6 +96,7 @@ class EventServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getEventType()).isEqualTo(EventType.UNIT_CREATED);
+        assertThat(result.getEntityType()).isEqualTo(EntityType.UNIT);
         assertThat(result.getEntityId()).isEqualTo(5L);
 
         verify(eventRepository).save(any(Event.class));
@@ -136,6 +141,7 @@ class EventServiceTest {
     void shouldCreateEventForPaymentCompleted() {
         // Given
         testEvent.setEventType(EventType.PAYMENT_COMPLETED);
+        testEvent.setEntityType(EntityType.PAYMENT);
         testEvent.setEntityId(200L);
         when(eventRepository.save(any(Event.class))).thenReturn(testEvent);
 
@@ -145,6 +151,7 @@ class EventServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getEventType()).isEqualTo(EventType.PAYMENT_COMPLETED);
+        assertThat(result.getEntityType()).isEqualTo(EntityType.PAYMENT);
         assertThat(result.getEntityId()).isEqualTo(200L);
 
         verify(eventRepository).save(any(Event.class));
@@ -201,6 +208,7 @@ class EventServiceTest {
         // Then
         assertThat(result).hasSize(2);
         assertThat(result).allMatch(e -> e.getEventType() == EventType.BOOKING_CANCELLED);
+        assertThat(result).allMatch(e -> e.getEntityType() == EntityType.BOOKING);
         assertThat(result).extracting(Event::getEntityId).containsExactlyInAnyOrder(10L, 20L);
     }
 

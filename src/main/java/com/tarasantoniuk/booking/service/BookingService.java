@@ -4,18 +4,19 @@ import com.tarasantoniuk.booking.dto.BookingResponseDto;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
+import com.tarasantoniuk.booking.event.BookingEvent;
 import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.repository.BookingRepository;
-import com.tarasantoniuk.event.enums.EventType;
-import com.tarasantoniuk.event.service.EventService;
-import com.tarasantoniuk.payment.service.PaymentService;
-import com.tarasantoniuk.statistic.service.UnitStatisticsService;
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
-import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,25 +25,25 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static com.tarasantoniuk.booking.config.BookingTimeConstants.BOOKING_EXPIRATION_MINUTES;
-import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_RATE;
-import java.util.List;
-import java.util.stream.Collectors;
+import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_MULTIPLIER;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
-    private final PaymentService paymentService;
-    private final EventService eventService;
-    private final UnitStatisticsService unitStatisticsService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Transactional
     public BookingResponseDto createBooking(CreateBookingRequestDto request) {
+        log.info("Creating booking for unitId={}, userId={}, dates={} to {}",
+                request.getUnitId(), request.getUserId(), request.getStartDate(), request.getEndDate());
+
         // 1. Acquire pessimistic lock on unit to prevent race conditions
         // This ensures only one transaction can create a booking for this unit at a time
         Unit unit = unitRepository.findByIdWithLock(request.getUnitId())
@@ -76,14 +77,11 @@ public class BookingService {
         // 5. Calculate total cost
         BigDecimal totalCost = calculateTotalCost(unit, request.getStartDate(), request.getEndDate());
 
-        // 6. Create payment
-        paymentService.createPayment(saved, totalCost);
+        // 6. Publish event (triggers payment creation, audit event, cache invalidation)
+        eventPublisher.publishEvent(BookingEvent.created(saved.getId(), totalCost));
 
-        // 7. Create event
-        eventService.createEvent(EventType.BOOKING_CREATED, saved.getId());
-
-        // 8. Invalidate cache
-        unitStatisticsService.invalidateAvailableUnitsCache();
+        log.info("Booking created successfully: bookingId={}, unitId={}, userId={}",
+                saved.getId(), unit.getId(), user.getId());
 
         return BookingResponseDto.from(saved, totalCost);
     }
@@ -101,9 +99,8 @@ public class BookingService {
         return BookingResponseDto.from(booking, totalCost);
     }
 
-    public List<BookingResponseDto> getUserBookings(Long userId) {
-        List<Booking> bookings = bookingRepository.findByUserIdWithUnit(userId);
-        return bookings.stream()
+    public Page<BookingResponseDto> getUserBookings(Long userId, Pageable pageable) {
+        return bookingRepository.findByUserIdWithUnit(userId, pageable)
                 .map(booking -> {
                     BigDecimal totalCost = calculateTotalCost(
                             booking.getUnit(),
@@ -111,30 +108,52 @@ public class BookingService {
                             booking.getEndDate()
                     );
                     return BookingResponseDto.from(booking, totalCost);
-                })
-                .collect(Collectors.toList());
+                });
     }
 
     @Transactional
     public void cancelBooking(Long bookingId, Long userId) {
+        log.info("Cancelling booking: bookingId={}, userId={}", bookingId, userId);
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         if (!booking.getUser().getId().equals(userId)) {
+            log.warn("Unauthorized cancel attempt: bookingId={}, requestUserId={}, ownerUserId={}",
+                    bookingId, userId, booking.getUser().getId());
             throw new IllegalArgumentException("You can only cancel your own bookings");
         }
 
         if (booking.getStatus() == BookingStatus.CANCELLED) {
+            log.warn("Attempt to cancel already cancelled booking: bookingId={}", bookingId);
             throw new IllegalArgumentException("Booking is already cancelled");
+        }
+
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            log.warn("Cancelling confirmed booking {} - refund logic not yet implemented", bookingId);
+            // TODO: Implement refund logic for confirmed bookings
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
-        // Create event
-        eventService.createEvent(EventType.BOOKING_CANCELLED, bookingId);
+        eventPublisher.publishEvent(BookingEvent.cancelled(bookingId));
 
-        unitStatisticsService.invalidateAvailableUnitsCache();
+        log.info("Booking cancelled successfully: bookingId={}", bookingId);
+    }
+
+    @Transactional
+    public void confirmBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setExpiresAt(null);
+        bookingRepository.save(booking);
+
+        eventPublisher.publishEvent(BookingEvent.confirmed(bookingId));
+
+        log.info("Booking confirmed: bookingId={}", bookingId);
     }
 
     private boolean isUnitAvailable(Long unitId, java.time.LocalDate startDate, java.time.LocalDate endDate) {
@@ -148,7 +167,6 @@ public class BookingService {
         }
 
         BigDecimal baseCost = unit.getBaseCost().multiply(BigDecimal.valueOf(days));
-        BigDecimal markup = baseCost.multiply(MARKUP_RATE);
-        return baseCost.add(markup);
+        return baseCost.multiply(MARKUP_MULTIPLIER);
     }
 }

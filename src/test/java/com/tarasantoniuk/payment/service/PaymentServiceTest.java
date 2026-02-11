@@ -1,9 +1,11 @@
 package com.tarasantoniuk.payment.service;
 
-import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
+import com.tarasantoniuk.booking.service.BookingService;
+import com.tarasantoniuk.common.TestFixtures;
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.payment.dto.PaymentResponseDto;
@@ -11,9 +13,7 @@ import com.tarasantoniuk.payment.dto.ProcessPaymentRequestDto;
 import com.tarasantoniuk.payment.entity.Payment;
 import com.tarasantoniuk.payment.enums.PaymentStatus;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
-import com.tarasantoniuk.statistic.service.UnitStatisticsService;
 import com.tarasantoniuk.unit.entity.Unit;
-import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,11 +24,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -43,10 +42,10 @@ class PaymentServiceTest {
     private BookingRepository bookingRepository;
 
     @Mock
-    private EventService eventService;
+    private BookingService bookingService;
 
     @Mock
-    private UnitStatisticsService unitStatisticsService;
+    private EventService eventService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -58,40 +57,21 @@ class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setUsername("testuser");
-
-        testUnit = new Unit();
-        testUnit.setId(1L);
-        testUnit.setBaseCost(BigDecimal.valueOf(100));
-        testUnit.setAccommodationType(AccommodationType.FLAT);
-
-        testBooking = new Booking();
-        testBooking.setId(1L);
-        testBooking.setUnit(testUnit);
-        testBooking.setUser(testUser);
-        testBooking.setStartDate(LocalDate.now().plusDays(1));
-        testBooking.setEndDate(LocalDate.now().plusDays(3));
-        testBooking.setStatus(BookingStatus.PENDING);
-        testBooking.setExpiresAt(LocalDateTime.now().plusMinutes(15));
-
-        testPayment = new Payment();
-        testPayment.setId(1L);
-        testPayment.setBooking(testBooking);
-        testPayment.setAmount(BigDecimal.valueOf(230.00));
-        testPayment.setStatus(PaymentStatus.PENDING);
-        testPayment.setCreatedAt(LocalDateTime.now());
+        testUser = TestFixtures.createTestUser();
+        testUnit = TestFixtures.createTestUnit();
+        testBooking = TestFixtures.createTestBooking(testUnit, testUser);
+        testPayment = TestFixtures.createTestPayment(testBooking);
     }
 
     @Test
     @DisplayName("Should create payment successfully")
     void shouldCreatePaymentSuccessfully() {
         // Given
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
         when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
 
         // When
-        Payment result = paymentService.createPayment(testBooking, BigDecimal.valueOf(230.00));
+        Payment result = paymentService.createPaymentForBooking(1L, BigDecimal.valueOf(230.00));
 
         // Then
         assertThat(result).isNotNull();
@@ -99,6 +79,7 @@ class PaymentServiceTest {
         assertThat(result.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(230.00));
         assertThat(result.getStatus()).isEqualTo(PaymentStatus.PENDING);
 
+        verify(bookingRepository).findById(1L);
         verify(paymentRepository).save(any(Payment.class));
     }
 
@@ -112,7 +93,6 @@ class PaymentServiceTest {
         when(bookingRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testBooking));
         when(paymentRepository.findByBookingId(1L)).thenReturn(Optional.of(testPayment));
         when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
-        when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
 
         // When
         PaymentResponseDto response = paymentService.processPayment(request);
@@ -125,14 +105,10 @@ class PaymentServiceTest {
         verify(bookingRepository).findByIdWithLock(1L);
         verify(paymentRepository).findByBookingId(1L);
         verify(paymentRepository).save(testPayment);
-        verify(bookingRepository).save(testBooking);
         verify(eventService).createEvent(EventType.PAYMENT_COMPLETED, 1L);
-        verify(eventService).createEvent(EventType.BOOKING_CONFIRMED, 1L);
-        verify(unitStatisticsService).invalidateAvailableUnitsCache();
+        verify(bookingService).confirmBooking(1L);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
-        assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-        assertThat(testBooking.getExpiresAt()).isNull();
     }
 
     @Test

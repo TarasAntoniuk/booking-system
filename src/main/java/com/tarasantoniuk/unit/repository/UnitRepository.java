@@ -21,14 +21,14 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
      * Excludes units with PENDING or CONFIRMED bookings that end today or later
      */
     @Query("""
-        SELECT COUNT(DISTINCT u.id)
-            FROM Unit u
-            LEFT JOIN Booking b ON b.unit.id = u.id\s
-                AND b.status IN ('PENDING', 'CONFIRMED')
-                AND b.startDate <= CURRENT_DATE
-                AND b.endDate >= CURRENT_DATE
-            WHERE b.id IS NULL
-    """)
+                SELECT COUNT(DISTINCT u.id)
+                    FROM Unit u
+                    LEFT JOIN Booking b ON b.unit.id = u.id\s
+                        AND b.status IN ('PENDING', 'CONFIRMED')
+                        AND b.startDate <= CURRENT_DATE
+                        AND b.endDate >= CURRENT_DATE
+                    WHERE b.id IS NULL
+            """)
     Long countAvailableUnits();
 
     /**
@@ -36,14 +36,14 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
      * Uses LEFT JOIN for better performance than NOT IN subquery
      */
     @Query("""
-    SELECT DISTINCT u\s
-    FROM Unit u
-    LEFT JOIN Booking b ON b.unit.id = u.id
-        AND b.status IN ('PENDING', 'CONFIRMED')
-        AND b.startDate <= :endDate\s
-        AND b.endDate >= :startDate
-    WHERE b.id IS NULL
-   \s""")
+             SELECT DISTINCT u\s
+             FROM Unit u
+             LEFT JOIN Booking b ON b.unit.id = u.id
+                 AND b.status IN ('PENDING', 'CONFIRMED')
+                 AND b.startDate <= :endDate\s
+                 AND b.endDate >= :startDate
+             WHERE b.id IS NULL
+            \s""")
     List<Unit> findAvailableUnits(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate

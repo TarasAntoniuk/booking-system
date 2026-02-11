@@ -1,18 +1,15 @@
 package com.tarasantoniuk.booking.service;
 
-import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.booking.dto.BookingResponseDto;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
+import com.tarasantoniuk.booking.event.BookingEvent;
 import com.tarasantoniuk.booking.exception.UnitNotAvailableException;
 import com.tarasantoniuk.booking.repository.BookingRepository;
-import com.tarasantoniuk.event.enums.EventType;
-import com.tarasantoniuk.event.service.EventService;
-import com.tarasantoniuk.payment.service.PaymentService;
-import com.tarasantoniuk.statistic.service.UnitStatisticsService;
+import com.tarasantoniuk.common.TestFixtures;
+import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.unit.entity.Unit;
-import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.entity.User;
 import com.tarasantoniuk.user.repository.UserRepository;
@@ -23,14 +20,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -49,13 +50,7 @@ class BookingServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private PaymentService paymentService;
-
-    @Mock
-    private EventService eventService;
-
-    @Mock
-    private UnitStatisticsService unitStatisticsService;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private BookingService bookingService;
@@ -66,26 +61,9 @@ class BookingServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setUsername("testuser");
-        testUser.setEmail("test@example.com");
-
-        testUnit = new Unit();
-        testUnit.setId(1L);
-        testUnit.setNumberOfRooms(2);
-        testUnit.setAccommodationType(AccommodationType.FLAT);
-        testUnit.setFloor(3);
-        testUnit.setBaseCost(BigDecimal.valueOf(100));
-
-        testBooking = new Booking();
-        testBooking.setId(1L);
-        testBooking.setUnit(testUnit);
-        testBooking.setUser(testUser);
-        testBooking.setStartDate(LocalDate.now().plusDays(1));
-        testBooking.setEndDate(LocalDate.now().plusDays(3));
-        testBooking.setStatus(BookingStatus.PENDING);
-        testBooking.setCreatedAt(LocalDateTime.now());
+        testUser = TestFixtures.createTestUser();
+        testUnit = TestFixtures.createTestUnit();
+        testBooking = TestFixtures.createTestBooking(testUnit, testUser);
     }
 
     @Test
@@ -114,9 +92,7 @@ class BookingServiceTest {
         verify(unitRepository).findByIdWithLock(1L);
         verify(userRepository).findById(1L);
         verify(bookingRepository).save(any(Booking.class));
-        verify(paymentService).createPayment(eq(testBooking), any(BigDecimal.class));
-        verify(eventService).createEvent(EventType.BOOKING_CREATED, 1L);
-        verify(unitStatisticsService).invalidateAvailableUnitsCache();
+        verify(eventPublisher).publishEvent(any(BookingEvent.class));
     }
 
     @Test
@@ -260,7 +236,7 @@ class BookingServiceTest {
     }
 
     @Test
-    @DisplayName("Should get user bookings successfully")
+    @DisplayName("Should get user bookings successfully with pagination")
     void shouldGetUserBookingsSuccessfully() {
         // Given
         Booking booking2 = new Booking();
@@ -271,16 +247,19 @@ class BookingServiceTest {
         booking2.setEndDate(LocalDate.now().plusDays(7));
         booking2.setStatus(BookingStatus.CONFIRMED);
 
-        when(bookingRepository.findByUserIdWithUnit(1L)).thenReturn(List.of(testBooking, booking2));
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Booking> bookingPage = new PageImpl<>(List.of(testBooking, booking2), pageable, 2);
+        when(bookingRepository.findByUserIdWithUnit(1L, pageable)).thenReturn(bookingPage);
 
         // When
-        List<BookingResponseDto> bookings = bookingService.getUserBookings(1L);
+        Page<BookingResponseDto> bookings = bookingService.getUserBookings(1L, pageable);
 
         // Then
-        assertThat(bookings).hasSize(2);
-        assertThat(bookings.get(0).getId()).isEqualTo(1L);
-        assertThat(bookings.get(1).getId()).isEqualTo(2L);
-        verify(bookingRepository).findByUserIdWithUnit(1L);
+        assertThat(bookings.getContent()).hasSize(2);
+        assertThat(bookings.getContent().get(0).getId()).isEqualTo(1L);
+        assertThat(bookings.getContent().get(1).getId()).isEqualTo(2L);
+        assertThat(bookings.getTotalElements()).isEqualTo(2);
+        verify(bookingRepository).findByUserIdWithUnit(1L, pageable);
     }
 
     @Test
@@ -296,8 +275,7 @@ class BookingServiceTest {
         // Then
         verify(bookingRepository).findById(1L);
         verify(bookingRepository).save(testBooking);
-        verify(eventService).createEvent(EventType.BOOKING_CANCELLED, 1L);
-        verify(unitStatisticsService).invalidateAvailableUnitsCache();
+        verify(eventPublisher).publishEvent(any(BookingEvent.class));
         assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
     }
 

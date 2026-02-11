@@ -1,6 +1,7 @@
 package com.tarasantoniuk.event.service;
 
 import com.tarasantoniuk.event.entity.Event;
+import com.tarasantoniuk.event.enums.EntityType;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class EventService {
     public Event createEvent(EventType eventType, Long entityId, String eventData) {
         Event event = new Event();
         event.setEventType(eventType);
+        event.setEntityType(resolveEntityType(eventType));
         event.setEntityId(entityId);
         event.setEventData(eventData);
 
@@ -42,6 +44,7 @@ public class EventService {
                 .map(entityId -> {
                     Event event = new Event();
                     event.setEventType(eventType);
+                    event.setEntityType(resolveEntityType(eventType));
                     event.setEntityId(entityId);
                     return event;
                 })
@@ -51,5 +54,13 @@ public class EventService {
         log.info("Batch created {} events of type {}", saved.size(), eventType);
 
         return saved;
+    }
+
+    private EntityType resolveEntityType(EventType eventType) {
+        return switch (eventType) {
+            case UNIT_CREATED -> EntityType.UNIT;
+            case BOOKING_CREATED, BOOKING_CONFIRMED, BOOKING_CANCELLED, BOOKING_EXPIRED -> EntityType.BOOKING;
+            case PAYMENT_COMPLETED -> EntityType.PAYMENT;
+        };
     }
 }

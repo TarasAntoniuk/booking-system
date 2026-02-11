@@ -28,7 +28,7 @@ public class RedisConfig {
 
         // Serializers
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
-        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper());
+        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(createRedisObjectMapper());
 
         template.setKeySerializer(stringSerializer);
         template.setValueSerializer(jsonSerializer);
@@ -49,7 +49,7 @@ public class RedisConfig {
                 )
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
-                                new GenericJackson2JsonRedisSerializer(objectMapper())
+                                new GenericJackson2JsonRedisSerializer(createRedisObjectMapper())
                         )
                 );
 
@@ -58,8 +58,7 @@ public class RedisConfig {
                 .build();
     }
 
-    @Bean
-    public ObjectMapper objectMapper() {
+    private ObjectMapper createRedisObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         return mapper;

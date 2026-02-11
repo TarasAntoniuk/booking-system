@@ -2,28 +2,33 @@ package com.tarasantoniuk.booking.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
+import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.common.AbstractIntegrationTest;
+import com.tarasantoniuk.event.repository.EventRepository;
 import com.tarasantoniuk.payment.dto.ProcessPaymentRequestDto;
+import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.dto.CreateUnitRequestDto;
 import com.tarasantoniuk.unit.enums.AccommodationType;
+import com.tarasantoniuk.unit.repository.UnitRepository;
 import com.tarasantoniuk.user.dto.UserRequestDto;
+import com.tarasantoniuk.user.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * End-to-End Functional Tests for Booking System
@@ -32,7 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Uses real database (H2 in-memory for tests) and all layers of the application.
  */
 @AutoConfigureMockMvc
-@Transactional
 @DisplayName("Booking System - End-to-End Functional Tests")
 class BookingSystemFunctionalTest extends AbstractIntegrationTest {
 
@@ -42,11 +46,42 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private EventRepository eventRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private UnitRepository unitRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
     private Long userId;
     private Long unitId;
 
+    @AfterEach
+    void tearDown() {
+        eventRepository.deleteAll();
+        paymentRepository.deleteAll();
+        bookingRepository.deleteAll();
+        unitRepository.deleteAll();
+        userRepository.deleteAll();
+    }
+
     @BeforeEach
     void setUp() throws Exception {
+        // Clean up from previous tests
+        eventRepository.deleteAll();
+        paymentRepository.deleteAll();
+        bookingRepository.deleteAll();
+        unitRepository.deleteAll();
+        userRepository.deleteAll();
+
         // Create test user
         UserRequestDto userRequest = new UserRequestDto();
         userRequest.setUsername("john.doe");
@@ -111,8 +146,8 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         // Step 3: Verify booking appears in user's bookings
         mockMvc.perform(get("/api/bookings/user/" + userId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(bookingId));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(bookingId));
 
         // Step 4: Verify statistics updated (unit now unavailable)
         mockMvc.perform(get("/api/statistics/available-units"))

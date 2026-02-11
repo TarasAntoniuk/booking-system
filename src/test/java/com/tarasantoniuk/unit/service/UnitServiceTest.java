@@ -1,5 +1,6 @@
 package com.tarasantoniuk.unit.service;
 
+import com.tarasantoniuk.common.TestFixtures;
 import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
@@ -29,7 +30,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -58,18 +60,8 @@ class UnitServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setUsername("owner");
-        testUser.setEmail("owner@example.com");
-
-        testUnit = new Unit();
-        testUnit.setId(1L);
-        testUnit.setNumberOfRooms(2);
-        testUnit.setAccommodationType(AccommodationType.FLAT);
-        testUnit.setFloor(3);
-        testUnit.setBaseCost(BigDecimal.valueOf(100));
-        testUnit.setDescription("Test unit");
+        testUser = TestFixtures.createTestUser();
+        testUnit = TestFixtures.createTestUnit();
         testUnit.setOwner(testUser);
     }
 

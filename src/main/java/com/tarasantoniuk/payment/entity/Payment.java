@@ -22,7 +22,7 @@ public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "payments_id_seq")
-    @SequenceGenerator(name = "payments_id_seq", sequenceName = "payments_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "payments_id_seq", sequenceName = "payments_id_seq", allocationSize = 50)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -39,4 +39,16 @@ public class Payment {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Payment payment)) return false;
+        return id != null && id.equals(payment.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
