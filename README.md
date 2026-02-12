@@ -161,20 +161,52 @@ GET    /api/statistics/available-units  Get cached available units count
 
 ## 🔧 Configuration
 
-### Database
+### Environment Variables
 
-```yaml
-spring.datasource.url=jdbc:postgresql://localhost:5432/booking_db
-spring.datasource.username=booking_user
-spring.datasource.password=booking_pass
+This application uses environment variables for configuration following the [12-factor app](https://12factor.net/config) methodology.
+
+#### Local Development Setup
+
+1. **Copy the environment template:**
+```bash
+   cp .env.example .env
 ```
 
-### Redis Cache
-
-```yaml
-spring.data.redis.host=localhost
-spring.data.redis.port=6379
+2. **Review and update `.env` if needed:**
+```properties
+   DB_URL=jdbc:postgresql://localhost:5433/booking_system
+   DB_USERNAME=booking_user
+   DB_PASSWORD=booking_pass
 ```
+
+   For local development with Docker, the default values in `.env.example` match the Docker Compose configuration.
+
+3. **Start the application:**
+```bash
+   ./gradlew bootRun
+```
+
+#### Environment Variables Reference
+
+| Variable       | Description                    | Required | Default                                                 | Source            |
+|----------------|--------------------------------|----------|---------------------------------------------------------|-------------------|
+| `DB_URL`       | PostgreSQL JDBC connection URL | Yes      | `jdbc:postgresql://localhost:5433/booking_system`       | `application.yml` |
+| `DB_USERNAME`  | Database username              | Yes      | `booking_user`                                          | `application.yml` |
+| `DB_PASSWORD`  | Database password              | Yes      | `booking_pass`                                          | `.env` file only  |
+| `REDIS_HOST`   | Redis server hostname          | No       | `localhost`                                             | `application.yml` |
+| `REDIS_PORT`   | Redis server port              | No       | `6379`                                                  | `application.yml` |
+
+#### Production Deployment
+
+In production environments:
+- **Never use fallback values** - explicitly set all environment variables
+- Use a secrets management system (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault)
+- Rotate credentials regularly
+- Use different credentials per environment (staging, production)
+
+#### Security Note
+
+⚠️ The `.env` file is excluded from version control (`.gitignore`). Never commit credentials to the repository.
 
 ### Booking Expiration
 
