@@ -5,7 +5,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/booking_system}
     username: ${DB_USERNAME:booking_user}
-    password: ${DB_PASSWORD:booking_pass}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 
   jpa:
