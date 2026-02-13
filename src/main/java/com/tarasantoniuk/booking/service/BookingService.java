@@ -124,17 +124,11 @@ public class BookingService {
             throw new IllegalArgumentException("You can only cancel your own bookings");
         }
 
-        if (booking.getStatus() == BookingStatus.CANCELLED) {
-            log.warn("Attempt to cancel already cancelled booking: bookingId={}", bookingId);
-            throw new IllegalArgumentException("Booking is already cancelled");
-        }
-
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
             log.warn("Cancelling confirmed booking {} - refund logic not yet implemented", bookingId);
-            // TODO: Implement refund logic for confirmed bookings
         }
 
-        booking.setStatus(BookingStatus.CANCELLED);
+        booking.cancel();
         bookingRepository.save(booking);
 
         eventPublisher.publishEvent(BookingEvent.cancelled(bookingId));
@@ -147,8 +141,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
-        booking.setStatus(BookingStatus.CONFIRMED);
-        booking.setExpiresAt(null);
+        booking.confirm();
         bookingRepository.save(booking);
 
         eventPublisher.publishEvent(BookingEvent.confirmed(bookingId));

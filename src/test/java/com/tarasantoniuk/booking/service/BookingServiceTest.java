@@ -302,7 +302,7 @@ class BookingServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> bookingService.cancelBooking(1L, 1L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Booking is already cancelled");
 
         verify(bookingRepository, never()).save(any(Booking.class));
