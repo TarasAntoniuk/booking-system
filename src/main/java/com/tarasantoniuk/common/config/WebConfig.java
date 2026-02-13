@@ -1,5 +1,6 @@
 package com.tarasantoniuk.common.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -12,21 +13,20 @@ import java.util.List;
 /**
  * Web configuration for CORS (Cross-Origin Resource Sharing)
  * <p>
- * This configuration allows the API to be accessed from different origins,
- * which is necessary for frontend applications running on different ports/domains.
- * <p>
- * IMPORTANT: In production, you should restrict allowedOriginPatterns to specific
- * domains instead of using "*". For example:
- * - config.setAllowedOriginPatterns(List.of("https://yourdomain.com", "https://app.yourdomain.com"));
+ * Allowed origins are configured via the {@code CORS_ALLOWED_ORIGINS} environment
+ * variable (comma-separated). Defaults to {@code *} for local development.
  */
 @Configuration
 public class WebConfig {
+
+    @Value("${cors.allowed-origins:*}")
+    private List<String> allowedOrigins;
 
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOriginPatterns(allowedOrigins);
 
         config.setAllowCredentials(true);
 
