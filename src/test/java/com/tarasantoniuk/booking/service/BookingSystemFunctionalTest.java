@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -354,7 +355,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
                 .get("availableUnitsCount").asInt();
 
         // Count should decrease by at least 1
-        assert count2 <= count1 : "Count should decrease after booking";
+        assertThat(count2).as("Count should decrease after booking").isLessThanOrEqualTo(count1);
 
         // Step 4: Cancel booking
         mockMvc.perform(patch("/api/v1/bookings/" + bookingId + "/cancel")
@@ -369,7 +370,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
                 .get("availableUnitsCount").asInt();
 
         // Count should increase back
-        assert count3 >= count2 : "Count should increase after cancellation";
+        assertThat(count3).as("Count should increase after cancellation").isGreaterThanOrEqualTo(count2);
     }
 
     @Test
@@ -419,8 +420,8 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         if (content.size() >= 2) {
             double firstCost = content.get(0).get("baseCost").asDouble();
             double secondCost = content.get(1).get("baseCost").asDouble();
-            assert firstCost >= secondCost :
-                    "Sorting failed: first cost (" + firstCost + ") should be >= second cost (" + secondCost + ")";
+            assertThat(firstCost).as("First cost should be >= second cost when sorted desc")
+                    .isGreaterThanOrEqualTo(secondCost);
         }
     }
 }
