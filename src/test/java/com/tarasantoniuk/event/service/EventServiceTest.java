@@ -1,5 +1,6 @@
 package com.tarasantoniuk.event.service;
 
+import com.tarasantoniuk.common.TestFixtures;
 import com.tarasantoniuk.event.entity.Event;
 import com.tarasantoniuk.event.enums.EntityType;
 import com.tarasantoniuk.event.enums.EventType;
@@ -35,7 +36,7 @@ class EventServiceTest {
     @BeforeEach
     void setUp() {
         testEvent = new Event();
-        testEvent.setId(1L);
+        TestFixtures.setId(testEvent, 1L);
         testEvent.setEventType(EventType.BOOKING_CREATED);
         testEvent.setEntityType(EntityType.BOOKING);
         testEvent.setEntityId(100L);
@@ -246,7 +247,7 @@ class EventServiceTest {
 
     private Event createTestEvent(Long id, EventType eventType, Long entityId) {
         Event event = new Event();
-        event.setId(id);
+        TestFixtures.setId(event, id);
         event.setEventType(eventType);
         event.setEntityId(entityId);
         event.setCreatedAt(LocalDateTime.now());
