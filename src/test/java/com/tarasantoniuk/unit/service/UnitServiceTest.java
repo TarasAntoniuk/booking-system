@@ -168,7 +168,7 @@ class UnitServiceTest {
     void shouldMapUnitWithNullOwnerToResponse() {
         // Given
         Unit unitWithoutOwner = new Unit();
-        unitWithoutOwner.setId(2L);
+        TestFixtures.setId(unitWithoutOwner, 2L);
         unitWithoutOwner.setNumberOfRooms(1);
         unitWithoutOwner.setAccommodationType(AccommodationType.FLAT);
         unitWithoutOwner.setFloor(1);

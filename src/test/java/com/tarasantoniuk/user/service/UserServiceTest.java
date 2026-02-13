@@ -1,5 +1,6 @@
 package com.tarasantoniuk.user.service;
 
+import com.tarasantoniuk.common.TestFixtures;
 import com.tarasantoniuk.common.exception.ResourceNotFoundException;
 import com.tarasantoniuk.user.dto.UserRequestDto;
 import com.tarasantoniuk.user.dto.UserResponseDto;
@@ -40,7 +41,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setId(1L);
+        TestFixtures.setId(testUser, 1L);
         testUser.setUsername("testuser");
         testUser.setEmail("test@example.com");
     }
@@ -131,7 +132,7 @@ class UserServiceTest {
     void shouldGetAllUsers() {
         // Given
         User user2 = new User();
-        user2.setId(2L);
+        TestFixtures.setId(user2, 2L);
         user2.setUsername("user2");
         user2.setEmail("user2@example.com");
 

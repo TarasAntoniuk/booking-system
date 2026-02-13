@@ -7,6 +7,7 @@ import com.tarasantoniuk.payment.enums.PaymentStatus;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.user.entity.User;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,9 +18,18 @@ public final class TestFixtures {
     private TestFixtures() {
     }
 
+    /**
+     * Sets the ID on any entity using reflection.
+     * Entity IDs are protected from public setters (@Setter(AccessLevel.NONE)),
+     * but tests need to set them for mock return values.
+     */
+    public static void setId(Object entity, Long id) {
+        ReflectionTestUtils.setField(entity, "id", id);
+    }
+
     public static User createTestUser() {
         User user = new User();
-        user.setId(1L);
+        setId(user, 1L);
         user.setUsername("testuser");
         user.setEmail("test@example.com");
         return user;
@@ -27,7 +37,7 @@ public final class TestFixtures {
 
     public static Unit createTestUnit() {
         Unit unit = new Unit();
-        unit.setId(1L);
+        setId(unit, 1L);
         unit.setNumberOfRooms(2);
         unit.setAccommodationType(AccommodationType.FLAT);
         unit.setFloor(3);
@@ -38,7 +48,7 @@ public final class TestFixtures {
 
     public static Booking createTestBooking(Unit unit, User user) {
         Booking booking = new Booking();
-        booking.setId(1L);
+        setId(booking, 1L);
         booking.setUnit(unit);
         booking.setUser(user);
         booking.setStartDate(LocalDate.now().plusDays(1));
@@ -50,7 +60,7 @@ public final class TestFixtures {
 
     public static Payment createTestPayment(Booking booking) {
         Payment payment = new Payment();
-        payment.setId(1L);
+        setId(payment, 1L);
         payment.setBooking(booking);
         payment.setAmount(BigDecimal.valueOf(230.00));
         payment.setStatus(PaymentStatus.PENDING);
