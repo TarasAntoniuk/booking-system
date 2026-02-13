@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/04-update-sequence-allocation-size.sql
   - include:
       file: db/changelog/05-add-entity-type-to-events.sql
+  - include:
+      file: db/changelog/06-rename-apartments-to-apartment.sql

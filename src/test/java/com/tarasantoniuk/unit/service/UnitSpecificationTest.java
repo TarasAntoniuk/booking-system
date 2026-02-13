@@ -67,7 +67,7 @@ class UnitSpecificationTest extends AbstractIntegrationTest {
         // Create test units with different properties
         unit1 = createAndSaveUnit(
                 2,  // rooms
-                AccommodationType.APARTMENTS,
+                AccommodationType.APARTMENT,
                 1,  // floor
                 BigDecimal.valueOf(100)  // base cost
         );
@@ -152,7 +152,7 @@ class UnitSpecificationTest extends AbstractIntegrationTest {
         void whenFilterByApartments_thenReturnOnlyApartments() {
             // Given
             UnitSearchCriteriaDto criteria = new UnitSearchCriteriaDto();
-            criteria.setAccommodationType(AccommodationType.APARTMENTS);
+            criteria.setAccommodationType(AccommodationType.APARTMENT);
 
             // When
             List<Unit> results = unitRepository.findAll(UnitSpecification.withCriteria(criteria));
@@ -657,7 +657,7 @@ class UnitSpecificationTest extends AbstractIntegrationTest {
             UnitSearchCriteriaDto criteria = new UnitSearchCriteriaDto();
             criteria.setNumberOfRooms(2);
             criteria.setFloor(1);
-            criteria.setAccommodationType(AccommodationType.APARTMENTS);
+            criteria.setAccommodationType(AccommodationType.APARTMENT);
 
             // When
             List<Unit> results = unitRepository.findAll(UnitSpecification.withCriteria(criteria));

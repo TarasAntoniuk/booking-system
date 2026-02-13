@@ -24,7 +24,7 @@ public class UnitResponseDto {
     @Schema(description = "Number of rooms in the unit", example = "2")
     private Integer numberOfRooms;
 
-    @Schema(description = "Type of accommodation", example = "FLAT", allowableValues = {"HOME", "FLAT", "APARTMENTS"})
+    @Schema(description = "Type of accommodation", example = "FLAT", allowableValues = {"HOME", "FLAT", "APARTMENT"})
     private AccommodationType accommodationType;
 
     @Schema(description = "Floor number", example = "3")
