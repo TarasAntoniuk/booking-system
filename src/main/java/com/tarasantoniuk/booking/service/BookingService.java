@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static com.tarasantoniuk.booking.config.BookingTimeConstants.BOOKING_EXPIRATION_MINUTES;
-import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_MULTIPLIER;
+
 
 @Service
 @RequiredArgsConstructor
@@ -154,12 +154,7 @@ public class BookingService {
     }
 
     private BigDecimal calculateTotalCost(Unit unit, java.time.LocalDate startDate, java.time.LocalDate endDate) {
-        long days = ChronoUnit.DAYS.between(startDate, endDate);
-        if (days <= 0) {
-            days = 1; // minimum 1 day
-        }
-
-        BigDecimal baseCost = unit.getBaseCost().multiply(BigDecimal.valueOf(days));
-        return baseCost.multiply(MARKUP_MULTIPLIER);
+        long days = Math.max(ChronoUnit.DAYS.between(startDate, endDate), 1);
+        return unit.calculateCostForDays(days);
     }
 }
