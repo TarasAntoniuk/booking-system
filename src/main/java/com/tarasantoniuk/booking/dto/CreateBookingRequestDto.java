@@ -1,7 +1,7 @@
 package com.tarasantoniuk.booking.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,11 +27,11 @@ public class CreateBookingRequestDto {
 
     @Schema(description = "Booking start date", example = "2026-02-01", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Start date is required")
-    @Future(message = "Start date must be in the future")
+    @FutureOrPresent(message = "Start date must be today or in the future")
     private LocalDate startDate;
 
     @Schema(description = "Booking end date (must be after start date)", example = "2026-02-05", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "End date is required")
-    @Future(message = "End date must be in the future")
+    @FutureOrPresent(message = "End date must be today or in the future")
     private LocalDate endDate;
 }
