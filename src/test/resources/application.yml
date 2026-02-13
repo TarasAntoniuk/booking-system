@@ -1,17 +1,18 @@
-# Base test configuration applied to ALL tests
-# This file is loaded before any profile-specific configs
-
 spring:
-  # Default H2 database for tests without explicit profile
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
     driver-class-name: org.h2.Driver
     username: sa
     password:
+    hikari:
+      connection-timeout: 2000
+      max-lifetime: 30000
+      minimum-idle: 1
+      maximum-pool-size: 3
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
     show-sql: false
     properties:
       hibernate:
@@ -25,22 +26,20 @@ spring:
   liquibase:
     enabled: false
 
-  # Mock Redis for tests
   data:
     redis:
       host: localhost
       port: 6379
 
   cache:
-    type: none  # Disable caching in tests by default
+    type: none
 
-# Disable application scheduling for all tests
 app:
   scheduling:
     enabled: false
 
-# Minimal logging for tests
 logging:
   level:
     root: WARN
     com.tarasantoniuk: INFO
+    org.testcontainers: INFO

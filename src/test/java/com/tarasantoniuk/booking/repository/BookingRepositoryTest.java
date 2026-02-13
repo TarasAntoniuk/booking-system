@@ -2,6 +2,7 @@ package com.tarasantoniuk.booking.repository;
 
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
+import com.tarasantoniuk.common.AbstractIntegrationTest;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.unit.repository.UnitRepository;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,17 +23,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Repository layer tests for BookingRepository using H2 in-memory database.
+ * Repository layer tests for BookingRepository using Testcontainers PostgreSQL.
  * Tests custom queries and JPA methods critical for booking logic.
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestPropertySource(properties = {
-        "spring.liquibase.enabled=false",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
-})
 @DisplayName("BookingRepository Tests")
-class BookingRepositoryTest {
+class BookingRepositoryTest extends AbstractIntegrationTest {
 
     @Autowired
     private BookingRepository bookingRepository;

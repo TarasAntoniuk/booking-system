@@ -5,6 +5,7 @@ import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.common.AbstractIntegrationTest;
 import com.tarasantoniuk.event.repository.EventRepository;
+import org.springframework.boot.test.context.SpringBootTest;
 import com.tarasantoniuk.payment.dto.ProcessPaymentRequestDto;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.dto.CreateUnitRequestDto;
@@ -36,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests complete user flows from API level without mocking services.
  * Uses real database (H2 in-memory for tests) and all layers of the application.
  */
+@SpringBootTest
 @AutoConfigureMockMvc
 @DisplayName("Booking System - End-to-End Functional Tests")
 class BookingSystemFunctionalTest extends AbstractIntegrationTest {

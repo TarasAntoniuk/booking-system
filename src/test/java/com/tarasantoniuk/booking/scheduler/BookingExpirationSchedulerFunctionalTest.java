@@ -5,6 +5,7 @@ import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.common.AbstractIntegrationTest;
 import com.tarasantoniuk.event.repository.EventRepository;
+import org.springframework.boot.test.context.SpringBootTest;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
@@ -28,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests the automatic cancellation of expired bookings after 15 minutes
  * and verifies cache invalidation happens correctly.
  */
+@SpringBootTest
 @DisplayName("Booking Expiration Scheduler - Functional Tests")
 class BookingExpirationSchedulerFunctionalTest extends AbstractIntegrationTest {
 

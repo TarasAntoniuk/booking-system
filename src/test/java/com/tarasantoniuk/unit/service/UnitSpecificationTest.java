@@ -3,6 +3,7 @@ package com.tarasantoniuk.unit.service;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.booking.repository.BookingRepository;
+import com.tarasantoniuk.common.AbstractIntegrationTest;
 import com.tarasantoniuk.unit.dto.UnitSearchCriteriaDto;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
@@ -13,11 +14,6 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,29 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Uses real database (Testcontainers) to ensure JPA Specifications work correctly.
  */
 @DataJpaTest
-@Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DisplayName("UnitSpecification Tests")
-class UnitSpecificationTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test")
-            .withReuse(true);
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-        registry.add("spring.liquibase.enabled", () -> "false");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        registry.add("spring.jpa.properties.hibernate.dialect",
-                () -> "org.hibernate.dialect.PostgreSQLDialect");
-    }
+class UnitSpecificationTest extends AbstractIntegrationTest {
 
     @Autowired
     private UnitRepository unitRepository;
