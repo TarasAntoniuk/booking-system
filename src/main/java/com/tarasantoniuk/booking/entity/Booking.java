@@ -4,7 +4,6 @@ import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,7 +17,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Booking {
 
     @Id
@@ -50,6 +48,25 @@ public class Booking {
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
+
+    public void cancel() {
+        if (this.status == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("Booking is already cancelled");
+        }
+        this.status = BookingStatus.CANCELLED;
+    }
+
+    public void confirm() {
+        if (this.status != BookingStatus.PENDING) {
+            throw new IllegalStateException("Only PENDING bookings can be confirmed");
+        }
+        this.status = BookingStatus.CONFIRMED;
+        this.expiresAt = null;
+    }
+
+    public boolean isExpired() {
+        return this.expiresAt != null && !LocalDateTime.now().isBefore(this.expiresAt);
+    }
 
     @Override
     public boolean equals(Object o) {

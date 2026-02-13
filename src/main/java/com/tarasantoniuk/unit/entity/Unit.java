@@ -3,7 +3,6 @@ package com.tarasantoniuk.unit.entity;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,7 +18,6 @@ import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_MULTIPLIE
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Unit {
 
     @Id
