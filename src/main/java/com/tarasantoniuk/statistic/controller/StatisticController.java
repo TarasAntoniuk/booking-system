@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/statistics")
+@RequestMapping("/api/v1/statistics")
 @RequiredArgsConstructor
 @Tag(name = "Statistics", description = "Statistics and caching API - view and refresh cached statistics")
 public class StatisticController {

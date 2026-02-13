@@ -21,7 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/bookings")
+@RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
 @Tag(name = "Bookings", description = "Booking management API - create, view and cancel accommodation bookings")
 public class BookingController {

@@ -69,7 +69,7 @@ class BookingControllerTest {
         when(bookingService.createBooking(any(CreateBookingRequestDto.class))).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -94,7 +94,7 @@ class BookingControllerTest {
         when(bookingService.getBookingById(1L)).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(get("/api/bookings/1"))
+        mockMvc.perform(get("/api/v1/bookings/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
@@ -120,7 +120,7 @@ class BookingControllerTest {
         when(bookingService.getUserBookings(eq(1L), any(Pageable.class))).thenReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/bookings/user/1"))
+        mockMvc.perform(get("/api/v1/bookings/user/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].id").value(1))
@@ -139,7 +139,7 @@ class BookingControllerTest {
         when(bookingService.getUserBookings(eq(1L), any(Pageable.class))).thenReturn(emptyPage);
 
         // When
-        mockMvc.perform(get("/api/bookings/user/1")
+        mockMvc.perform(get("/api/v1/bookings/user/1")
                         .param("size", "500"))
                 .andExpect(status().isOk());
 
@@ -157,7 +157,7 @@ class BookingControllerTest {
         when(bookingService.getUserBookings(eq(1L), any(Pageable.class))).thenReturn(emptyPage);
 
         // When
-        mockMvc.perform(get("/api/bookings/user/1")
+        mockMvc.perform(get("/api/v1/bookings/user/1")
                         .param("page", "2")
                         .param("size", "10")
                         .param("sortBy", "startDate")
@@ -180,7 +180,7 @@ class BookingControllerTest {
         doNothing().when(bookingService).cancelBooking(1L, 1L);
 
         // When & Then
-        mockMvc.perform(patch("/api/bookings/1/cancel")
+        mockMvc.perform(patch("/api/v1/bookings/1/cancel")
                         .param("userId", "1"))
                 .andExpect(status().isNoContent());
 
