@@ -51,11 +51,19 @@ public class Booking {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
-    public void cancel() {
+    /**
+     * Cancel this booking. Both PENDING and CONFIRMED bookings can be cancelled.
+     * Note: Refund logic for CONFIRMED bookings with completed payments is not yet implemented.
+     *
+     * @return the previous status before cancellation (useful for determining if refund is needed)
+     */
+    public BookingStatus cancel() {
         if (this.status == BookingStatus.CANCELLED) {
             throw new IllegalStateException("Booking is already cancelled");
         }
+        BookingStatus previousStatus = this.status;
         this.status = BookingStatus.CANCELLED;
+        return previousStatus;
     }
 
     public void confirm() {

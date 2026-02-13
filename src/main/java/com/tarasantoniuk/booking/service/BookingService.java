@@ -124,11 +124,11 @@ public class BookingService {
             throw new IllegalArgumentException("You can only cancel your own bookings");
         }
 
-        if (booking.getStatus() == BookingStatus.CONFIRMED) {
-            log.warn("Cancelling confirmed booking {} - refund logic not yet implemented", bookingId);
-        }
+        BookingStatus previousStatus = booking.cancel();
 
-        booking.cancel();
+        if (previousStatus == BookingStatus.CONFIRMED) {
+            log.warn("Cancelled confirmed booking {} - refund logic not yet implemented", bookingId);
+        }
         bookingRepository.save(booking);
 
         eventPublisher.publishEvent(BookingEvent.cancelled(bookingId));
