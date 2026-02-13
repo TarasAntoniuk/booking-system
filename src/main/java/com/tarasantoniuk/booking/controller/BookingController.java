@@ -103,7 +103,7 @@ public class BookingController {
         return ResponseEntity.ok(bookings);
     }
 
-    @DeleteMapping("/{id}/cancel")
+    @PatchMapping("/{id}/cancel")
     @Operation(
             summary = "Cancel a booking",
             description = "Cancels an existing booking. Only the user who made the booking can cancel it. " +

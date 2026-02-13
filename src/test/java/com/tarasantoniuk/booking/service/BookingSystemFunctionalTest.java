@@ -206,7 +206,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.availableUnitsCount").value(lessThanOrEqualTo(initialCount)));
 
         // Step 4: Cancel booking
-        mockMvc.perform(delete("/api/bookings/" + bookingId + "/cancel")
+        mockMvc.perform(patch("/api/bookings/" + bookingId + "/cancel")
                         .param("userId", userId.toString()))
                 .andExpect(status().isNoContent());
 
@@ -357,7 +357,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         assert count2 <= count1 : "Count should decrease after booking";
 
         // Step 4: Cancel booking
-        mockMvc.perform(delete("/api/bookings/" + bookingId + "/cancel")
+        mockMvc.perform(patch("/api/bookings/" + bookingId + "/cancel")
                         .param("userId", userId.toString()))
                 .andExpect(status().isNoContent());
 

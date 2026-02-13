@@ -180,7 +180,7 @@ class BookingControllerTest {
         doNothing().when(bookingService).cancelBooking(1L, 1L);
 
         // When & Then
-        mockMvc.perform(delete("/api/bookings/1/cancel")
+        mockMvc.perform(patch("/api/bookings/1/cancel")
                         .param("userId", "1"))
                 .andExpect(status().isNoContent());
 
