@@ -147,7 +147,7 @@ class BookingServiceTest {
         request.setEndDate(LocalDate.now().plusDays(3));
 
         Booking conflictingBooking = new Booking();
-        conflictingBooking.setId(2L);
+        TestFixtures.setId(conflictingBooking, 2L);
 
         when(unitRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testUnit));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
@@ -240,7 +240,7 @@ class BookingServiceTest {
     void shouldGetUserBookingsSuccessfully() {
         // Given
         Booking booking2 = new Booking();
-        booking2.setId(2L);
+        TestFixtures.setId(booking2, 2L);
         booking2.setUnit(testUnit);
         booking2.setUser(testUser);
         booking2.setStartDate(LocalDate.now().plusDays(5));
@@ -328,7 +328,7 @@ class BookingServiceTest {
     void shouldPreventDoubleBookingWhenFirstBookingIsPending() {
         // Given - First booking with PENDING status
         Booking pendingBooking = new Booking();
-        pendingBooking.setId(1L);
+        TestFixtures.setId(pendingBooking, 1L);
         pendingBooking.setUnit(testUnit);
         pendingBooking.setUser(testUser);
         pendingBooking.setStartDate(LocalDate.of(2026, 1, 22));
@@ -377,7 +377,7 @@ class BookingServiceTest {
 
         // Setup for first booking
         Booking firstBooking = new Booking();
-        firstBooking.setId(1L);
+        TestFixtures.setId(firstBooking, 1L);
         firstBooking.setUnit(testUnit);
         firstBooking.setUser(testUser);
         firstBooking.setStartDate(sameDate);
