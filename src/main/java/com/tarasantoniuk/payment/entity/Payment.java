@@ -3,6 +3,7 @@ package com.tarasantoniuk.payment.entity;
 import com.tarasantoniuk.booking.entity.Booking;
 import com.tarasantoniuk.payment.enums.PaymentStatus;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,6 +22,7 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "payments_id_seq")
     @SequenceGenerator(name = "payments_id_seq", sequenceName = "payments_id_seq", allocationSize = 50)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)

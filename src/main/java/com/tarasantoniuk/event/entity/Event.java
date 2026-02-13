@@ -3,6 +3,7 @@ package com.tarasantoniuk.event.entity;
 import com.tarasantoniuk.event.enums.EntityType;
 import com.tarasantoniuk.event.enums.EventType;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +21,7 @@ public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "events_id_seq")
     @SequenceGenerator(name = "events_id_seq", sequenceName = "events_id_seq", allocationSize = 50)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @Enumerated(EnumType.STRING)
