@@ -8,6 +8,7 @@ import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.booking.service.BookingService;
 import com.tarasantoniuk.common.AbstractIntegrationTest;
 import com.tarasantoniuk.event.repository.EventRepository;
+import org.springframework.boot.test.context.SpringBootTest;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.unit.enums.AccommodationType;
@@ -32,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * two bookings for the same unit and dates when the first booking
  * was still in PENDING status.
  */
+@SpringBootTest
 @DisplayName("Double Booking Prevention Integration Tests")
 class DoubleBookingPreventionTest extends AbstractIntegrationTest {
 
