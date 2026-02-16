@@ -15,7 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * Handles cross-cutting concerns triggered by booking state changes:
  * audit event creation, cache invalidation, and payment creation.
  * Decouples BookingService from EventService, UnitStatisticsService, and PaymentService.
- *
+ * <p>
  * Payment creation runs synchronously (same transaction) to guarantee consistency.
  * Audit logging and cache invalidation run after commit to avoid rollback on non-critical failures.
  */
