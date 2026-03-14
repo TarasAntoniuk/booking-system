@@ -20,14 +20,14 @@ class ErrorResponseTest {
                 400,
                 "Bad Request",
                 "Invalid input",
-                "/api/test"
+                "/api/v1/test"
         );
 
         // Then
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getError()).isEqualTo("Bad Request");
         assertThat(errorResponse.getMessage()).isEqualTo("Invalid input");
-        assertThat(errorResponse.getPath()).isEqualTo("/api/test");
+        assertThat(errorResponse.getPath()).isEqualTo("/api/v1/test");
         assertThat(errorResponse.getTimestamp()).isNotNull();
         assertThat(errorResponse.getTimestamp()).isBetween(
                 LocalDateTime.now().minusSeconds(5),
@@ -47,7 +47,7 @@ class ErrorResponseTest {
                 400,
                 "Validation Failed",
                 "Invalid request data",
-                "/api/users",
+                "/api/v1/users",
                 details
         );
 
@@ -55,7 +55,7 @@ class ErrorResponseTest {
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getError()).isEqualTo("Validation Failed");
         assertThat(errorResponse.getMessage()).isEqualTo("Invalid request data");
-        assertThat(errorResponse.getPath()).isEqualTo("/api/users");
+        assertThat(errorResponse.getPath()).isEqualTo("/api/v1/users");
         assertThat(errorResponse.getTimestamp()).isNotNull();
         assertThat(errorResponse.getDetails()).hasSize(2);
         assertThat(errorResponse.getDetails()).containsExactly(
@@ -76,14 +76,14 @@ class ErrorResponseTest {
                 .status(404)
                 .error("Not Found")
                 .message("Resource not found")
-                .path("/api/resource/123")
+                .path("/api/v1/resource/123")
                 .build();
 
         // Then
         assertThat(errorResponse.getStatus()).isEqualTo(404);
         assertThat(errorResponse.getError()).isEqualTo("Not Found");
         assertThat(errorResponse.getMessage()).isEqualTo("Resource not found");
-        assertThat(errorResponse.getPath()).isEqualTo("/api/resource/123");
+        assertThat(errorResponse.getPath()).isEqualTo("/api/v1/resource/123");
         assertThat(errorResponse.getTimestamp()).isEqualTo(now);
     }
 
@@ -95,14 +95,14 @@ class ErrorResponseTest {
         errorResponse.setStatus(500);
         errorResponse.setError("Internal Server Error");
         errorResponse.setMessage("Something went wrong");
-        errorResponse.setPath("/api/error");
+        errorResponse.setPath("/api/v1/error");
         errorResponse.setTimestamp(LocalDateTime.now());
 
         // Then
         assertThat(errorResponse.getStatus()).isEqualTo(500);
         assertThat(errorResponse.getError()).isEqualTo("Internal Server Error");
         assertThat(errorResponse.getMessage()).isEqualTo("Something went wrong");
-        assertThat(errorResponse.getPath()).isEqualTo("/api/error");
+        assertThat(errorResponse.getPath()).isEqualTo("/api/v1/error");
         assertThat(errorResponse.getTimestamp()).isNotNull();
     }
 
@@ -119,7 +119,7 @@ class ErrorResponseTest {
                 400,
                 "Bad Request",
                 "Invalid data",
-                "/api/test",
+                "/api/v1/test",
                 details
         );
 
@@ -128,7 +128,7 @@ class ErrorResponseTest {
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getError()).isEqualTo("Bad Request");
         assertThat(errorResponse.getMessage()).isEqualTo("Invalid data");
-        assertThat(errorResponse.getPath()).isEqualTo("/api/test");
+        assertThat(errorResponse.getPath()).isEqualTo("/api/v1/test");
         assertThat(errorResponse.getDetails()).isEqualTo(details);
     }
 
@@ -140,7 +140,7 @@ class ErrorResponseTest {
                 400,
                 "Bad Request",
                 "Invalid input",
-                "/api/test",
+                "/api/v1/test",
                 Arrays.asList()
         );
 
@@ -158,7 +158,7 @@ class ErrorResponseTest {
                 .status(400)
                 .error("Bad Request")
                 .message("Invalid input")
-                .path("/api/test")
+                .path("/api/v1/test")
                 .build();
 
         ErrorResponse error2 = ErrorResponse.builder()
@@ -166,7 +166,7 @@ class ErrorResponseTest {
                 .status(400)
                 .error("Bad Request")
                 .message("Invalid input")
-                .path("/api/test")
+                .path("/api/v1/test")
                 .build();
 
         // Then
@@ -182,7 +182,7 @@ class ErrorResponseTest {
                 404,
                 "Not Found",
                 "Resource not found",
-                "/api/test"
+                "/api/v1/test"
         );
 
         // Then
@@ -190,6 +190,6 @@ class ErrorResponseTest {
         assertThat(toString).contains("404");
         assertThat(toString).contains("Not Found");
         assertThat(toString).contains("Resource not found");
-        assertThat(toString).contains("/api/test");
+        assertThat(toString).contains("/api/v1/test");
     }
 }

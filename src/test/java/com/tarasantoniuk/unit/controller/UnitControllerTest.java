@@ -71,7 +71,7 @@ class UnitControllerTest {
         when(unitService.createUnit(any(CreateUnitRequestDto.class))).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(post("/api/units")
+        mockMvc.perform(post("/api/v1/units")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -94,7 +94,7 @@ class UnitControllerTest {
         when(unitService.getUnitById(1L)).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(get("/api/units/1"))
+        mockMvc.perform(get("/api/v1/units/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.numberOfRooms").value(2));
@@ -119,7 +119,7 @@ class UnitControllerTest {
         when(unitService.getAllUnits(any())).thenReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/units")
+        mockMvc.perform(get("/api/v1/units")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -143,7 +143,7 @@ class UnitControllerTest {
         when(unitService.searchUnits(any(), any())).thenReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/units/search")
+        mockMvc.perform(get("/api/v1/units/search")
                         .param("numberOfRooms", "2")
                         .param("accommodationType", "FLAT")
                         .param("page", "0")
@@ -163,7 +163,7 @@ class UnitControllerTest {
         when(unitService.getAllUnits(any())).thenReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/units")
+        mockMvc.perform(get("/api/v1/units")
                         .param("page", "0")
                         .param("size", "20")
                         .param("sortBy", "baseCost")
@@ -181,7 +181,7 @@ class UnitControllerTest {
         when(unitService.getAllUnits(any())).thenReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/units")
+        mockMvc.perform(get("/api/v1/units")
                         .param("page", "0")
                         .param("size", "20")
                         .param("sortBy", "numberOfRooms")
@@ -199,7 +199,7 @@ class UnitControllerTest {
         when(unitService.getAllUnits(any())).thenReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/units"))
+        mockMvc.perform(get("/api/v1/units"))
                 .andExpect(status().isOk());
 
         verify(unitService).getAllUnits(any());
@@ -213,7 +213,7 @@ class UnitControllerTest {
         when(unitService.getAllUnits(any())).thenReturn(page);
 
         // When
-        mockMvc.perform(get("/api/units")
+        mockMvc.perform(get("/api/v1/units")
                         .param("size", "1000"))
                 .andExpect(status().isOk());
 
@@ -231,7 +231,7 @@ class UnitControllerTest {
         when(unitService.searchUnits(any(), any())).thenReturn(page);
 
         // When
-        mockMvc.perform(get("/api/units/search")
+        mockMvc.perform(get("/api/v1/units/search")
                         .param("size", "500"))
                 .andExpect(status().isOk());
 
@@ -249,7 +249,7 @@ class UnitControllerTest {
         when(unitService.getAllUnits(any())).thenReturn(page);
 
         // When
-        mockMvc.perform(get("/api/units")
+        mockMvc.perform(get("/api/v1/units")
                         .param("size", "50"))
                 .andExpect(status().isOk());
 
@@ -267,7 +267,7 @@ class UnitControllerTest {
         when(unitService.searchUnits(any(), any())).thenReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/units/search")
+        mockMvc.perform(get("/api/v1/units/search")
                         .param("floor", "3")
                         .param("sortBy", "baseCost")
                         .param("sortDir", "desc"))

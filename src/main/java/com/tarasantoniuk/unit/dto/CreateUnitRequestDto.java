@@ -23,7 +23,7 @@ public class CreateUnitRequestDto {
     @Max(value = 20, message = "Number of rooms cannot exceed 20")
     private Integer numberOfRooms;
 
-    @Schema(description = "Type of accommodation", example = "FLAT", allowableValues = {"HOME", "FLAT", "APARTMENTS"}, requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Type of accommodation", example = "FLAT", allowableValues = {"HOME", "FLAT", "APARTMENT"}, requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Accommodation type is required")
     private AccommodationType accommodationType;
 

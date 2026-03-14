@@ -56,7 +56,7 @@ class PaymentControllerTest {
         when(paymentService.processPayment(any(ProcessPaymentRequestDto.class))).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(post("/api/payments/process")
+        mockMvc.perform(post("/api/v1/payments/process")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -82,7 +82,7 @@ class PaymentControllerTest {
         when(paymentService.getPaymentByBookingId(1L)).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(get("/api/payments/booking/1"))
+        mockMvc.perform(get("/api/v1/payments/booking/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.bookingId").value(1))

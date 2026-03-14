@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static com.tarasantoniuk.booking.config.BookingTimeConstants.BOOKING_EXPIRATION_MINUTES;
-import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_MULTIPLIER;
+
 
 @Service
 @RequiredArgsConstructor
@@ -124,17 +124,11 @@ public class BookingService {
             throw new IllegalArgumentException("You can only cancel your own bookings");
         }
 
-        if (booking.getStatus() == BookingStatus.CANCELLED) {
-            log.warn("Attempt to cancel already cancelled booking: bookingId={}", bookingId);
-            throw new IllegalArgumentException("Booking is already cancelled");
-        }
+        BookingStatus previousStatus = booking.cancel();
 
-        if (booking.getStatus() == BookingStatus.CONFIRMED) {
-            log.warn("Cancelling confirmed booking {} - refund logic not yet implemented", bookingId);
-            // TODO: Implement refund logic for confirmed bookings
+        if (previousStatus == BookingStatus.CONFIRMED) {
+            log.warn("Cancelled confirmed booking {} - refund logic not yet implemented", bookingId);
         }
-
-        booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
         eventPublisher.publishEvent(BookingEvent.cancelled(bookingId));
@@ -147,8 +141,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
-        booking.setStatus(BookingStatus.CONFIRMED);
-        booking.setExpiresAt(null);
+        booking.confirm();
         bookingRepository.save(booking);
 
         eventPublisher.publishEvent(BookingEvent.confirmed(bookingId));
@@ -161,12 +154,7 @@ public class BookingService {
     }
 
     private BigDecimal calculateTotalCost(Unit unit, java.time.LocalDate startDate, java.time.LocalDate endDate) {
-        long days = ChronoUnit.DAYS.between(startDate, endDate);
-        if (days <= 0) {
-            days = 1; // minimum 1 day
-        }
-
-        BigDecimal baseCost = unit.getBaseCost().multiply(BigDecimal.valueOf(days));
-        return baseCost.multiply(MARKUP_MULTIPLIER);
+        long days = Math.max(ChronoUnit.DAYS.between(startDate, endDate), 1);
+        return unit.calculateCostForDays(days);
     }
 }

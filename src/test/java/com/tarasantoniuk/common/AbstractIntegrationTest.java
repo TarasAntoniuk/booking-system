@@ -13,6 +13,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
  * test suite, preventing stale connection issues when Spring caches contexts.
  * <p>
  * This class intentionally has NO Spring context annotations (@SpringBootTest,
+ *
  * @DataJpaTest, etc.) so that subclasses can choose their own context type:
  * <ul>
  *   <li>Full context: add @SpringBootTest on the subclass</li>

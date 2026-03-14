@@ -163,42 +163,47 @@ GET    /api/statistics/available-units  Get cached available units count
 
 ### Environment Variables
 
-This application uses environment variables for configuration following the [12-factor app](https://12factor.net/config) methodology.
+This application uses environment variables for configuration following the [12-factor app](https://12factor.net/config)
+methodology.
 
 #### Local Development Setup
 
 1. **Copy the environment template:**
+
 ```bash
    cp .env.example .env
 ```
 
 2. **Review and update `.env` if needed:**
+
 ```properties
    DB_URL=jdbc:postgresql://localhost:5433/booking_system
    DB_USERNAME=booking_user
    DB_PASSWORD=booking_pass
 ```
 
-   For local development with Docker, the default values in `.env.example` match the Docker Compose configuration.
+For local development with Docker, the default values in `.env.example` match the Docker Compose configuration.
 
 3. **Start the application:**
+
 ```bash
    ./gradlew bootRun
 ```
 
 #### Environment Variables Reference
 
-| Variable       | Description                    | Required | Default                                                 | Source            |
-|----------------|--------------------------------|----------|---------------------------------------------------------|-------------------|
-| `DB_URL`       | PostgreSQL JDBC connection URL | Yes      | `jdbc:postgresql://localhost:5433/booking_system`       | `application.yml` |
-| `DB_USERNAME`  | Database username              | Yes      | `booking_user`                                          | `application.yml` |
-| `DB_PASSWORD`  | Database password              | Yes      | `booking_pass`                                          | `.env` file only  |
-| `REDIS_HOST`   | Redis server hostname          | No       | `localhost`                                             | `application.yml` |
-| `REDIS_PORT`   | Redis server port              | No       | `6379`                                                  | `application.yml` |
+| Variable      | Description                    | Required | Default                                           | Source            |
+|---------------|--------------------------------|----------|---------------------------------------------------|-------------------|
+| `DB_URL`      | PostgreSQL JDBC connection URL | Yes      | `jdbc:postgresql://localhost:5433/booking_system` | `application.yml` |
+| `DB_USERNAME` | Database username              | Yes      | `booking_user`                                    | `application.yml` |
+| `DB_PASSWORD` | Database password              | Yes      | `booking_pass`                                    | `.env` file only  |
+| `REDIS_HOST`  | Redis server hostname          | No       | `localhost`                                       | `application.yml` |
+| `REDIS_PORT`  | Redis server port              | No       | `6379`                                            | `application.yml` |
 
 #### Production Deployment
 
 In production environments:
+
 - **Never use fallback values** - explicitly set all environment variables
 - Use a secrets management system (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault)
 - Rotate credentials regularly

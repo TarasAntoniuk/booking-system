@@ -3,7 +3,7 @@ package com.tarasantoniuk.unit.entity;
 import com.tarasantoniuk.unit.enums.AccommodationType;
 import com.tarasantoniuk.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,12 +19,12 @@ import static com.tarasantoniuk.booking.config.PricingConstants.MARKUP_MULTIPLIE
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Unit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "units_id_seq")
     @SequenceGenerator(name = "units_id_seq", sequenceName = "units_id_seq", allocationSize = 50)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @Column(name = "number_of_rooms", nullable = false)
@@ -52,10 +52,17 @@ public class Unit {
     private LocalDateTime createdAt;
 
     /**
-     * Calculate total cost with 15% markup
+     * Calculate cost for a given number of days with 15% markup
+     */
+    public BigDecimal calculateCostForDays(long days) {
+        return baseCost.multiply(BigDecimal.valueOf(days)).multiply(MARKUP_MULTIPLIER);
+    }
+
+    /**
+     * Calculate per-night cost with 15% markup
      */
     public BigDecimal getTotalCost() {
-        return baseCost.multiply(MARKUP_MULTIPLIER);
+        return calculateCostForDays(1);
     }
 
     @Override

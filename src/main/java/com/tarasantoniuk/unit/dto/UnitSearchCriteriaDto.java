@@ -23,7 +23,7 @@ public class UnitSearchCriteriaDto {
     @Min(value = 1, message = "Number of rooms must be at least 1")
     private Integer numberOfRooms;
 
-    @Schema(description = "Filter by accommodation type", example = "FLAT", allowableValues = {"HOME", "FLAT", "APARTMENTS"})
+    @Schema(description = "Filter by accommodation type", example = "FLAT", allowableValues = {"HOME", "FLAT", "APARTMENT"})
     private AccommodationType accommodationType;
 
     @Schema(description = "Filter by exact floor number", example = "3")

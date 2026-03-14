@@ -5,7 +5,6 @@ import com.tarasantoniuk.booking.dto.CreateBookingRequestDto;
 import com.tarasantoniuk.booking.repository.BookingRepository;
 import com.tarasantoniuk.common.AbstractIntegrationTest;
 import com.tarasantoniuk.event.repository.EventRepository;
-import org.springframework.boot.test.context.SpringBootTest;
 import com.tarasantoniuk.payment.dto.ProcessPaymentRequestDto;
 import com.tarasantoniuk.payment.repository.PaymentRepository;
 import com.tarasantoniuk.unit.dto.CreateUnitRequestDto;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -89,7 +90,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         userRequest.setUsername("john.doe");
         userRequest.setEmail("john.doe@example.com");
 
-        MvcResult userResult = mockMvc.perform(post("/api/users")
+        MvcResult userResult = mockMvc.perform(post("/api/v1/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userRequest)))
                 .andExpect(status().isCreated())
@@ -107,7 +108,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         unitRequest.setBaseCost(BigDecimal.valueOf(100.00));
         unitRequest.setDescription("Cozy 2-bedroom apartment");
 
-        MvcResult unitResult = mockMvc.perform(post("/api/units")
+        MvcResult unitResult = mockMvc.perform(post("/api/v1/units")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(unitRequest)))
                 .andExpect(status().isCreated())
@@ -121,7 +122,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
     @DisplayName("Complete Booking Flow: Create → Pay → Confirm")
     void completeBookingFlowCreatePayConfirm() throws Exception {
         // Step 1: Check initial statistics
-        mockMvc.perform(get("/api/statistics/available-units"))
+        mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableUnitsCount", greaterThan(0)));
 
@@ -132,7 +133,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         bookingRequest.setStartDate(LocalDate.now().plusDays(1));
         bookingRequest.setEndDate(LocalDate.now().plusDays(3));
 
-        MvcResult bookingResult = mockMvc.perform(post("/api/bookings")
+        MvcResult bookingResult = mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookingRequest)))
                 .andExpect(status().isCreated())
@@ -146,13 +147,13 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         Long bookingId = objectMapper.readTree(bookingResponse).get("id").asLong();
 
         // Step 3: Verify booking appears in user's bookings
-        mockMvc.perform(get("/api/bookings/user/" + userId))
+        mockMvc.perform(get("/api/v1/bookings/user/" + userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].id").value(bookingId));
 
         // Step 4: Verify statistics updated (unit now unavailable)
-        mockMvc.perform(get("/api/statistics/available-units"))
+        mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableUnitsCount", greaterThanOrEqualTo(0)));
 
@@ -160,14 +161,14 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         ProcessPaymentRequestDto paymentRequest = new ProcessPaymentRequestDto();
         paymentRequest.setBookingId(bookingId);
 
-        mockMvc.perform(post("/api/payments/process")
+        mockMvc.perform(post("/api/v1/payments/process")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(paymentRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
         // Step 6: Verify booking is now CONFIRMED
-        mockMvc.perform(get("/api/bookings/" + bookingId))
+        mockMvc.perform(get("/api/v1/bookings/" + bookingId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CONFIRMED"))
                 .andExpect(jsonPath("$.expiresAt").doesNotExist()); // expiration cleared after payment
@@ -177,7 +178,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
     @DisplayName("Booking Cancellation Flow: Create → Cancel → Unit Available Again")
     void bookingCancellationFlow() throws Exception {
         // Step 1: Get initial available units count
-        MvcResult statsResult = mockMvc.perform(get("/api/statistics/available-units"))
+        MvcResult statsResult = mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -191,7 +192,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         bookingRequest.setStartDate(LocalDate.now().plusDays(1));
         bookingRequest.setEndDate(LocalDate.now().plusDays(3));
 
-        MvcResult bookingResult = mockMvc.perform(post("/api/bookings")
+        MvcResult bookingResult = mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookingRequest)))
                 .andExpect(status().isCreated())
@@ -201,22 +202,22 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
                 .get("id").asLong();
 
         // Step 3: Verify unit is now unavailable
-        mockMvc.perform(get("/api/statistics/available-units"))
+        mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableUnitsCount").value(lessThanOrEqualTo(initialCount)));
 
         // Step 4: Cancel booking
-        mockMvc.perform(delete("/api/bookings/" + bookingId + "/cancel")
+        mockMvc.perform(patch("/api/v1/bookings/" + bookingId + "/cancel")
                         .param("userId", userId.toString()))
                 .andExpect(status().isNoContent());
 
         // Step 5: Verify booking is cancelled
-        mockMvc.perform(get("/api/bookings/" + bookingId))
+        mockMvc.perform(get("/api/v1/bookings/" + bookingId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
         // Step 6: Verify unit is available again
-        mockMvc.perform(get("/api/statistics/available-units"))
+        mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableUnitsCount").value(greaterThanOrEqualTo(initialCount)));
     }
@@ -231,7 +232,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         firstRequest.setStartDate(LocalDate.now().plusDays(1));
         firstRequest.setEndDate(LocalDate.now().plusDays(3));
 
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(firstRequest)))
                 .andExpect(status().isCreated())
@@ -244,7 +245,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         secondRequest.setStartDate(LocalDate.now().plusDays(1));
         secondRequest.setEndDate(LocalDate.now().plusDays(3));
 
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondRequest)))
                 .andExpect(status().isConflict())  // 409 - resource conflict
@@ -255,7 +256,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
     @DisplayName("Unit Search with Availability Filter")
     void shouldSearchUnitsWithAvailabilityFilter() throws Exception {
         // Step 1: Search available units
-        mockMvc.perform(get("/api/units/search")
+        mockMvc.perform(get("/api/v1/units/search")
                         .param("numberOfRooms", "2")
                         .param("accommodationType", "FLAT")
                         .param("startDate", LocalDate.now().plusDays(1).toString())
@@ -273,13 +274,13 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         bookingRequest.setStartDate(LocalDate.now().plusDays(1));
         bookingRequest.setEndDate(LocalDate.now().plusDays(3));
 
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookingRequest)))
                 .andExpect(status().isCreated());
 
         // Step 3: Search again - unit should NOT appear for same dates
-        mockMvc.perform(get("/api/units/search")
+        mockMvc.perform(get("/api/v1/units/search")
                         .param("numberOfRooms", "2")
                         .param("accommodationType", "FLAT")
                         .param("startDate", LocalDate.now().plusDays(1).toString())
@@ -290,7 +291,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.content[*].id", not(hasItem(unitId.intValue()))));
 
         // Step 4: But should appear for different dates
-        mockMvc.perform(get("/api/units/search")
+        mockMvc.perform(get("/api/v1/units/search")
                         .param("numberOfRooms", "2")
                         .param("accommodationType", "FLAT")  // Added to match the unit
                         .param("startDate", LocalDate.now().plusDays(10).toString())
@@ -311,7 +312,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         bookingRequest.setStartDate(LocalDate.now().plusDays(1));
         bookingRequest.setEndDate(LocalDate.now().plusDays(3)); // 2 nights
 
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookingRequest)))
                 .andExpect(status().isCreated())
@@ -324,7 +325,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         // This test verifies the cache invalidation fix
 
         // Step 1: Get initial count
-        MvcResult result1 = mockMvc.perform(get("/api/statistics/available-units"))
+        MvcResult result1 = mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andReturn();
         int count1 = objectMapper.readTree(result1.getResponse().getContentAsString())
@@ -337,7 +338,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         bookingRequest.setStartDate(LocalDate.now().plusDays(1));
         bookingRequest.setEndDate(LocalDate.now().plusDays(3));
 
-        MvcResult bookingResult = mockMvc.perform(post("/api/bookings")
+        MvcResult bookingResult = mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookingRequest)))
                 .andExpect(status().isCreated())
@@ -347,29 +348,29 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
                 .get("id").asLong();
 
         // Step 3: Verify count decreased
-        MvcResult result2 = mockMvc.perform(get("/api/statistics/available-units"))
+        MvcResult result2 = mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andReturn();
         int count2 = objectMapper.readTree(result2.getResponse().getContentAsString())
                 .get("availableUnitsCount").asInt();
 
         // Count should decrease by at least 1
-        assert count2 <= count1 : "Count should decrease after booking";
+        assertThat(count2).as("Count should decrease after booking").isLessThanOrEqualTo(count1);
 
         // Step 4: Cancel booking
-        mockMvc.perform(delete("/api/bookings/" + bookingId + "/cancel")
+        mockMvc.perform(patch("/api/v1/bookings/" + bookingId + "/cancel")
                         .param("userId", userId.toString()))
                 .andExpect(status().isNoContent());
 
         // Step 5: Verify count increased back
-        MvcResult result3 = mockMvc.perform(get("/api/statistics/available-units"))
+        MvcResult result3 = mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andReturn();
         int count3 = objectMapper.readTree(result3.getResponse().getContentAsString())
                 .get("availableUnitsCount").asInt();
 
         // Count should increase back
-        assert count3 >= count2 : "Count should increase after cancellation";
+        assertThat(count3).as("Count should increase after cancellation").isGreaterThanOrEqualTo(count2);
     }
 
     @Test
@@ -385,14 +386,14 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
             unitRequest.setBaseCost(BigDecimal.valueOf(100.00 + (i * 50)));
             unitRequest.setDescription("Test unit " + i);
 
-            mockMvc.perform(post("/api/units")
+            mockMvc.perform(post("/api/v1/units")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(unitRequest)))
                     .andExpect(status().isCreated());
         }
 
         // Test pagination: Page 0, Size 3
-        mockMvc.perform(get("/api/units")
+        mockMvc.perform(get("/api/v1/units")
                         .param("page", "0")
                         .param("size", "3"))
                 .andExpect(status().isOk())
@@ -402,7 +403,7 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.number").value(0));
 
         // Test sorting by baseCost descending
-        MvcResult sortResult = mockMvc.perform(get("/api/units")
+        MvcResult sortResult = mockMvc.perform(get("/api/v1/units")
                         .param("page", "0")
                         .param("size", "10")
                         .param("sortBy", "baseCost")
@@ -419,8 +420,8 @@ class BookingSystemFunctionalTest extends AbstractIntegrationTest {
         if (content.size() >= 2) {
             double firstCost = content.get(0).get("baseCost").asDouble();
             double secondCost = content.get(1).get("baseCost").asDouble();
-            assert firstCost >= secondCost :
-                    "Sorting failed: first cost (" + firstCost + ") should be >= second cost (" + secondCost + ")";
+            assertThat(firstCost).as("First cost should be >= second cost when sorted desc")
+                    .isGreaterThanOrEqualTo(secondCost);
         }
     }
 }

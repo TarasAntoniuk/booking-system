@@ -4,7 +4,7 @@ import com.tarasantoniuk.booking.enums.BookingStatus;
 import com.tarasantoniuk.unit.entity.Unit;
 import com.tarasantoniuk.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,12 +18,12 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bookings_id_seq")
     @SequenceGenerator(name = "bookings_id_seq", sequenceName = "bookings_id_seq", allocationSize = 50)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -50,6 +50,33 @@ public class Booking {
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
+
+    /**
+     * Cancel this booking. Both PENDING and CONFIRMED bookings can be cancelled.
+     * Note: Refund logic for CONFIRMED bookings with completed payments is not yet implemented.
+     *
+     * @return the previous status before cancellation (useful for determining if refund is needed)
+     */
+    public BookingStatus cancel() {
+        if (this.status == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("Booking is already cancelled");
+        }
+        BookingStatus previousStatus = this.status;
+        this.status = BookingStatus.CANCELLED;
+        return previousStatus;
+    }
+
+    public void confirm() {
+        if (this.status != BookingStatus.PENDING) {
+            throw new IllegalStateException("Only PENDING bookings can be confirmed");
+        }
+        this.status = BookingStatus.CONFIRMED;
+        this.expiresAt = null;
+    }
+
+    public boolean isExpired() {
+        return this.expiresAt != null && !LocalDateTime.now().isBefore(this.expiresAt);
+    }
 
     @Override
     public boolean equals(Object o) {

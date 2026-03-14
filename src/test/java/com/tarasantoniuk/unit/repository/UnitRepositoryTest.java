@@ -82,7 +82,7 @@ class UnitRepositoryTest extends AbstractIntegrationTest {
         // Given
         unitRepository.save(createUnit(1, AccommodationType.FLAT, 80.0));
         unitRepository.save(createUnit(2, AccommodationType.FLAT, 100.0));
-        unitRepository.save(createUnit(3, AccommodationType.APARTMENTS, 150.0));
+        unitRepository.save(createUnit(3, AccommodationType.APARTMENT, 150.0));
 
         // When
         Page<Unit> page = unitRepository.findAll(PageRequest.of(0, 2));
@@ -126,7 +126,7 @@ class UnitRepositoryTest extends AbstractIntegrationTest {
     @DisplayName("Should persist all unit properties")
     void shouldPersistAllUnitProperties() {
         // Given
-        Unit unit = createUnit(3, AccommodationType.APARTMENTS, 200.0);
+        Unit unit = createUnit(3, AccommodationType.APARTMENT, 200.0);
         unit.setFloor(5);
         unit.setDescription("Luxury apartment with great view");
 
@@ -138,7 +138,7 @@ class UnitRepositoryTest extends AbstractIntegrationTest {
         // Then
         assertThat(found).isNotNull();
         assertThat(found.getNumberOfRooms()).isEqualTo(3);
-        assertThat(found.getAccommodationType()).isEqualTo(AccommodationType.APARTMENTS);
+        assertThat(found.getAccommodationType()).isEqualTo(AccommodationType.APARTMENT);
         assertThat(found.getFloor()).isEqualTo(5);
         assertThat(found.getBaseCost()).isEqualByComparingTo(new BigDecimal("200.00"));
         assertThat(found.getDescription()).isEqualTo("Luxury apartment with great view");
@@ -240,7 +240,7 @@ class UnitRepositoryTest extends AbstractIntegrationTest {
             unitRepository.save(createUnit(1, AccommodationType.FLAT, 80.0));
 
             // Unit 2: active booking -> unavailable
-            Unit unit2 = unitRepository.save(createUnit(2, AccommodationType.APARTMENTS, 120.0));
+            Unit unit2 = unitRepository.save(createUnit(2, AccommodationType.APARTMENT, 120.0));
             createBooking(unit2, -2, 5, BookingStatus.CONFIRMED);
 
             // Unit 3: future booking only -> available

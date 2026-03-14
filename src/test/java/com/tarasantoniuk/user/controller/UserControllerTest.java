@@ -54,7 +54,7 @@ class UserControllerTest {
         when(userService.createUser(any(UserRequestDto.class))).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(post("/api/users")
+        mockMvc.perform(post("/api/v1/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -73,7 +73,7 @@ class UserControllerTest {
         when(userService.getUserById(1L)).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(get("/api/users/1"))
+        mockMvc.perform(get("/api/v1/users/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("testuser"));
@@ -93,7 +93,7 @@ class UserControllerTest {
         when(userService.getAllUsers(any(Pageable.class))).thenReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/users"))
+        mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].username").value("user1"))
@@ -112,7 +112,7 @@ class UserControllerTest {
         when(userService.getAllUsers(any(Pageable.class))).thenReturn(emptyPage);
 
         // When
-        mockMvc.perform(get("/api/users")
+        mockMvc.perform(get("/api/v1/users")
                         .param("size", "500"))
                 .andExpect(status().isOk());
 
@@ -130,7 +130,7 @@ class UserControllerTest {
         when(userService.getAllUsers(any(Pageable.class))).thenReturn(emptyPage);
 
         // When
-        mockMvc.perform(get("/api/users")
+        mockMvc.perform(get("/api/v1/users")
                         .param("page", "1")
                         .param("size", "5")
                         .param("sortBy", "username")
@@ -154,7 +154,7 @@ class UserControllerTest {
         when(userService.getUserByUsername("testuser")).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(get("/api/users/username/testuser"))
+        mockMvc.perform(get("/api/v1/users/username/testuser"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("testuser"));
 

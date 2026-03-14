@@ -87,6 +87,27 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle IllegalStateException - invalid state transitions
+     * Returns 400 Bad Request
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(
+            IllegalStateException ex,
+            HttpServletRequest request) {
+
+        log.warn("Illegal state: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    /**
      * Handle validation errors from @Valid annotations
      * Returns 400 Bad Request
      */

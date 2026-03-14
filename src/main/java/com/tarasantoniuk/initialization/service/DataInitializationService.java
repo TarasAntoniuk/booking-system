@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +26,6 @@ public class DataInitializationService {
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
     private final EventService eventService;
-
-    private final Random random = new Random();
 
     @PostConstruct
     @Transactional
@@ -72,20 +70,21 @@ public class DataInitializationService {
     }
 
     private Unit generateRandomUnit(List<User> users) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
         Unit unit = new Unit();
 
         // Random number of rooms (1-5)
-        unit.setNumberOfRooms(random.nextInt(5) + 1);
+        unit.setNumberOfRooms(random.nextInt(1, 6));
 
         // Random accommodation type
         AccommodationType[] types = AccommodationType.values();
         unit.setAccommodationType(types[random.nextInt(types.length)]);
 
         // Random floor (1-10)
-        unit.setFloor(random.nextInt(10) + 1);
+        unit.setFloor(random.nextInt(1, 11));
 
         // Random cost (50-500)
-        double cost = 50 + (random.nextDouble() * 450);
+        double cost = random.nextDouble(50, 500);
         unit.setBaseCost(BigDecimal.valueOf(Math.round(cost * 100.0) / 100.0));
 
         // Random description
@@ -109,6 +108,7 @@ public class DataInitializationService {
                 "with terrace", "close to city center"
         };
 
+        ThreadLocalRandom random = ThreadLocalRandom.current();
         String adjective = adjectives[random.nextInt(adjectives.length)];
         String feature = features[random.nextInt(features.length)];
 

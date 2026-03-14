@@ -54,14 +54,14 @@ class GlobalExceptionHandlerTest extends AbstractIntegrationTest {
                 .thenThrow(new UnitNotAvailableException("Unit is not available for selected dates"));
 
         // When & Then
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
                 .andExpect(jsonPath("$.message").value("Unit is not available for selected dates"))
-                .andExpect(jsonPath("$.path").value("/api/bookings"))
+                .andExpect(jsonPath("$.path").value("/api/v1/bookings"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
@@ -79,14 +79,14 @@ class GlobalExceptionHandlerTest extends AbstractIntegrationTest {
                 .thenThrow(new ResourceNotFoundException("Unit not found with id: 999"));
 
         // When & Then
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.message").value("Unit not found with id: 999"))
-                .andExpect(jsonPath("$.path").value("/api/bookings"))
+                .andExpect(jsonPath("$.path").value("/api/v1/bookings"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
@@ -97,7 +97,7 @@ class GlobalExceptionHandlerTest extends AbstractIntegrationTest {
         String invalidJson = "{unitId: 1, userId: 1}";
 
         // When & Then
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
                 .andExpect(status().isBadRequest())
@@ -121,7 +121,7 @@ class GlobalExceptionHandlerTest extends AbstractIntegrationTest {
                 .thenThrow(new RuntimeException("Unexpected database error"));
 
         // When & Then
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isInternalServerError())
@@ -139,7 +139,7 @@ class GlobalExceptionHandlerTest extends AbstractIntegrationTest {
         // All fields are null, violating @NotNull constraints
 
         // When & Then
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -157,7 +157,7 @@ class GlobalExceptionHandlerTest extends AbstractIntegrationTest {
         // Given - "abc" cannot be parsed as Long for {id} path variable
 
         // When & Then
-        mockMvc.perform(get("/api/bookings/abc"))
+        mockMvc.perform(get("/api/v1/bookings/abc"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
@@ -173,7 +173,7 @@ class GlobalExceptionHandlerTest extends AbstractIntegrationTest {
         GlobalExceptionHandler handler = new GlobalExceptionHandler();
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
                 "abc", null, "id", null, null);
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/bookings/abc");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/bookings/abc");
 
         // When
         var response = handler.handleTypeMismatch(ex, request);

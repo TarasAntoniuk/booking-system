@@ -249,7 +249,7 @@ class BookingRepositoryTest extends AbstractIntegrationTest {
         Unit anotherUnit = new Unit();
         anotherUnit.setOwner(testUnit.getOwner());
         anotherUnit.setNumberOfRooms(3);
-        anotherUnit.setAccommodationType(AccommodationType.APARTMENTS);
+        anotherUnit.setAccommodationType(AccommodationType.APARTMENT);
         anotherUnit.setFloor(2);
         anotherUnit.setBaseCost(new BigDecimal("150.00"));
         anotherUnit.setDescription("Another unit");

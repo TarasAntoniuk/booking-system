@@ -23,20 +23,28 @@ spring:
         order_inserts: true
         order_updates: true
 
+  # Liquibase disabled for tests - schema managed by Hibernate ddl-auto
   liquibase:
     enabled: false
 
+  # Redis defaults - overridden by Testcontainers in integration tests
   data:
     redis:
       host: localhost
       port: 6379
 
+  # Disable caching for unit tests (@WebMvcTest)
   cache:
     type: none
 
+# Disable scheduling in tests
 app:
   scheduling:
     enabled: false
+
+# Note: Integration tests (extending AbstractIntegrationTest) override
+# datasource, JPA dialect, and Redis settings via @DynamicPropertySource
+# to use Testcontainers PostgreSQL and Redis.
 
 logging:
   level:

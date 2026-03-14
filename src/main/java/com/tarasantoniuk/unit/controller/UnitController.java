@@ -22,7 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/units")
+@RequestMapping("/api/v1/units")
 @RequiredArgsConstructor
 @Tag(name = "Units", description = "Accommodation unit management API - create, view and search units")
 public class UnitController {

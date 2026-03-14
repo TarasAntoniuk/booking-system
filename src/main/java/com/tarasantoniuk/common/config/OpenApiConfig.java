@@ -22,7 +22,7 @@ public class OpenApiConfig {
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
                 .group("booking-system")
-                .pathsToMatch("/api/**")
+                .pathsToMatch("/api/v1/**")
                 .build();
     }
 }

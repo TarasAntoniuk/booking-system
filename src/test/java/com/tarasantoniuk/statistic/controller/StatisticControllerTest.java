@@ -36,7 +36,7 @@ class StatisticControllerTest {
         when(statisticService.getAvailableUnits()).thenReturn(stats);
 
         // When & Then
-        mockMvc.perform(get("/api/statistics/available-units"))
+        mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableUnitsCount").value(42));
 
@@ -51,7 +51,7 @@ class StatisticControllerTest {
         when(statisticService.refreshAvailableUnits()).thenReturn(stats);
 
         // When & Then
-        mockMvc.perform(post("/api/statistics/available-units/refresh"))
+        mockMvc.perform(post("/api/v1/statistics/available-units/refresh"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableUnitsCount").value(25));
 
@@ -66,7 +66,7 @@ class StatisticControllerTest {
         when(statisticService.getAvailableUnits()).thenReturn(stats);
 
         // When & Then
-        mockMvc.perform(get("/api/statistics/available-units"))
+        mockMvc.perform(get("/api/v1/statistics/available-units"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableUnitsCount").value(0));
 

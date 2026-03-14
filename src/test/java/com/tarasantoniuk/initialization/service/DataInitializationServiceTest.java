@@ -1,5 +1,6 @@
 package com.tarasantoniuk.initialization.service;
 
+import com.tarasantoniuk.common.TestFixtures;
 import com.tarasantoniuk.event.enums.EventType;
 import com.tarasantoniuk.event.service.EventService;
 import com.tarasantoniuk.unit.entity.Unit;
@@ -48,13 +49,13 @@ class DataInitializationServiceTest {
     void setUp() {
         testUsers = new ArrayList<>();
         User user1 = new User();
-        user1.setId(1L);
+        TestFixtures.setId(user1, 1L);
         user1.setUsername("user1");
         user1.setEmail("user1@example.com");
         testUsers.add(user1);
 
         User user2 = new User();
-        user2.setId(2L);
+        TestFixtures.setId(user2, 2L);
         user2.setUsername("user2");
         user2.setEmail("user2@example.com");
         testUsers.add(user2);
@@ -62,7 +63,7 @@ class DataInitializationServiceTest {
         testUnits = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
             Unit unit = new Unit();
-            unit.setId((long) i);
+            TestFixtures.setId(unit, (long) i);
             unit.setNumberOfRooms(2);
             unit.setAccommodationType(AccommodationType.FLAT);
             unit.setFloor(3);
@@ -196,7 +197,7 @@ class DataInitializationServiceTest {
     void shouldDistributeUnitsAmongUsers() {
         // Given
         User user3 = new User();
-        user3.setId(3L);
+        TestFixtures.setId(user3, 3L);
         user3.setUsername("user3");
         testUsers.add(user3);
 
