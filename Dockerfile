@@ -2,7 +2,7 @@ FROM amazoncorretto:21-alpine
 
 WORKDIR /app
 
-COPY build/libs/*.jar app.jar
+COPY booking-system-1.0.0.jar app.jar
 
 EXPOSE 8080
 
